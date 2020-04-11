@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Chao Zhang | Dr. rer nat. Sören Wilke</title>
+    <link>/authors/chao-zhang/</link>
+      <atom:link href="/authors/chao-zhang/index.xml" rel="self" type="application/rss+xml" />
+    <description>Chao Zhang</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2020</copyright><lastBuildDate>Wed, 23 Dec 2015 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>img/map[gravatar:%!s(bool=false) shape:circle]</url>
+      <title>Chao Zhang</title>
+      <link>/authors/chao-zhang/</link>
+    </image>
+    
+    <item>
+      <title>A Practical Method for Accurate Measurement of Trace Level Fluorine in Mg‐ and Fe‐Bearing Minerals and Glasses Using Electron Probe Microanalysis</title>
+      <link>/publication/microprobe/</link>
+      <pubDate>Wed, 23 Dec 2015 00:00:00 +0000</pubDate>
+      <guid>/publication/microprobe/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

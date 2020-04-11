@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts | Dr. rer nat. Sören Wilke</title>
+    <link>/post/</link>
+      <atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    <description>Posts</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2020</copyright><lastBuildDate>Fri, 10 Apr 2020 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>img/map[gravatar:%!s(bool=false) shape:circle]</url>
+      <title>Posts</title>
+      <link>/post/</link>
+    </image>
+    
+    <item>
+      <title>Digital Point Counting for Mineralogical Thin Section</title>
+      <link>/post/mincountr/</link>
+      <pubDate>Fri, 10 Apr 2020 00:00:00 +0000</pubDate>
+      <guid>/post/mincountr/</guid>
+      <description>
+
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Point_counting_(geology)&#34;&gt;Mineral point counting&lt;/a&gt; in &lt;a href=&#34;https://en.wikipedia.org/wiki/Thin_section&#34;&gt;geological thin sections&lt;/a&gt; is a simple yet very useful technique that aims at determining the relative proportion of different minerals within a rock. Quantifying this can give insight on the evolution of a magma within different stages of melt evolution or even underpin comparisons of similar melts from different magmatic complexes. Point counting in it’s classical form is, however, also &lt;a href=&#34;https://www.youtube.com/watch?v=3YJHryX7f1U&#34;&gt;famously laborious&lt;/a&gt;, as it traditionally involves manually shifting the microscopes stage by a fixed interval and basically keeping a tally of what you see at each position.&lt;/p&gt;
+&lt;p&gt;With the advent of computerized image processing techniques, digital point counting offers the potential to gather the desired information at a fraction of the time and effort used for the manual technique. This makes it possible to apply point counting to large databases of thin section imagery. I would argue that being able to massively broaden the base of available point counting data by (semi-)automating the gathering process is in itself a significant contribution to the importance of the role that point counting can play in geological investigations.&lt;/p&gt;
+&lt;p&gt;In this blogpost we will explore possibilities for digital point counting using &lt;a href=&#34;https://www.r-project.org/&#34;&gt;R&lt;/a&gt; and the &lt;a href=&#34;https://github.com/Ignimbrit/mincountr/blob/master/README.md&#34;&gt;mincountr&lt;/a&gt; library, a little package I wrote to bundle a few basic tools to ease some of the more repetitive tasks of that subject.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# You can install the mincountr package from github
+# remotes::install_github(&amp;quot;Ignimbrit/mincountr&amp;quot;)
+
+library(mincountr)
+library(ggplot2)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Say you have collected an image from a mineral-bearing thin section e.g. in an electron microprobe session and wonder about the relative share of the different phases in your sample. Your image might look something like this:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;myimage &amp;lt;- mcr_load_image(
+  system.file(&amp;quot;extdata&amp;quot;, &amp;quot;testim.png&amp;quot;, package = &amp;quot;mincountr&amp;quot;)
+  )
+plot(myimage)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2020-04-10-mincountr/index_files/figure-html/load%20image-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;As you can see, the different levels of brightness in the image allows the observer to distinguish between several distinct phases. There is a large, very bright mineral, some lightgrey minerals, a darkgrey, glassy matrix, some black holes and so on. With &lt;code&gt;mincountr&lt;/code&gt; we are able to translate this qualitative optical assessment into practical numbers. First let’s have a look at the density-distribution (like a continuous histogram) of the images brightness.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;mcr_inspect_phases(myimage)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2020-04-10-mincountr/index_files/figure-html/plot%20brightness-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Here we can see that the four phases we distinguished in the image above show up in the density distribution as distinct peaks of specific brightness values. We can use this to assign a brightness-range to certain phases.
+The peak on the far left (most dark) corresponds likely to the hole we’ve seen in our thin section image. The peak’s value range lays between value ~0-0.05. Other peaks (from left to right) range from 0.3-0.45 (glassy matrix?), from 0.5-0.65 (light gray minerals?) and from 0.92-1 (bright minerals?). Let me illustrate what I mean:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;mcr_inspect_phases(myimage) +
+  ggplot2::geom_vline(
+    xintercept = c(0, 0.05, 0.3, 0.45, 0.5, 0.65, 0.92, 1),
+    color = &amp;quot;red&amp;quot;
+      )&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2020-04-10-mincountr/index_files/figure-html/illustrate%20peakborders-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Now in this example we just chose the borders of the peak by hand. This is probably the safest method of constraining your brightness-levels, as it allows you to chip in your personal mineralogical expertise. However, sometimes you have a large stack of images you want to work with and probably not the time to constrain peak-ranges by hand every single time. This is why mincountr comes with an automatic mechanism to generate those numbers for you.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;myconstrains &amp;lt;- mcr_autoconstrain(myimage)
+print(myconstrains)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 4 x 4
+##      x1 peakpos     x2    ID
+##   &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt;
+## 1 0       0     0.0283     1
+## 2 0.338   0.382 0.437      2
+## 3 0.501   0.559 0.612      3
+## 4 0.963   0.989 1          4&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The &lt;code&gt;mcr_autoconstrain&lt;/code&gt; function automatically detects peaks and notes their position (&lt;code&gt;peakpos&lt;/code&gt;) and then goes on and calculates their borders both on the left-hand-side (&lt;code&gt;x1&lt;/code&gt;) and on the right hand side (&lt;code&gt;x2&lt;/code&gt;). Under the hood, &lt;code&gt;mcr_autoconstrain&lt;/code&gt; identifies turning points in the brightness-“spectra”, cuts it into pieces, one piece per peak, and then loops over the single-peak spectra-pieces to calculate the half-height-width.&lt;/p&gt;
+&lt;p&gt;Now we have all the information we need to assign certain areas of our original image to distinct phases. The mincountr-package comes with a function that lets you inspect what this assignment looks like.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;mcr_inspect_assignment(
+  myimage,
+  lhs = myconstrains$x1,
+  rhs = myconstrains$x2
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2020-04-10-mincountr/index_files/figure-html/check%20assignment-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;As every pixel in the original image was now assigned to one of the 7 levels shown in the picture above, we can go ahead and just count the pixels and then calculate the relative share of each group.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;myresult &amp;lt;- mcr_herd_minerals(
+  myimage,
+  lhs = myconstrains$x1,
+  rhs = myconstrains$x2
+)
+print(myresult)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 7 x 3
+##   Phase_ID pixels proportion_percentage
+##      &amp;lt;int&amp;gt;  &amp;lt;int&amp;gt;                 &amp;lt;dbl&amp;gt;
+## 1        1  34862                  9.88
+## 2        2  23583                  6.68
+## 3        3  97086                 27.5 
+## 4        4  18786                  5.32
+## 5        5  70327                 19.9 
+## 6        6  23485                  6.66
+## 7        7  84749                 24.0&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Working with climate data from the German Meteorological Service (DWD)</title>
+      <link>/post/working-with-rdwd/</link>
+      <pubDate>Wed, 08 Apr 2020 00:00:00 +0000</pubDate>
+      <guid>/post/working-with-rdwd/</guid>
+      <description>
+
+
+&lt;p&gt;Many tasks in the realm of Hydrogeology require data from meteorological observations to be taken into account. If you are working on such a project that happens to be located in Germany, you can count yourself lucky, because the &lt;a href=&#34;www.dwd.de&#34;&gt;Deutscher Wetterdienst&lt;/a&gt; (DWD, German Meteorological Service) is providing a cornucopia of both brand new and historic data for free via its &lt;a href=&#34;https://opendata.dwd.de/climate_environment/CDC/&#34;&gt;climate datacenter&lt;/a&gt; (CDC). The interface to that server, however, can be somewhat confusing at first, due to the mass of very different data formats and the poignant absence of any meaningful GUI. In this post we will therefore explore how we can use &lt;a href=&#34;www.r-project.org&#34;&gt;R&lt;/a&gt; and specifically the &lt;a href=&#34;https://cran.r-project.org/web/packages/rdwd/index.html&#34;&gt;rdwd&lt;/a&gt; library to access data from the CDC and turn it into a (hopefully) meaningful visualization.&lt;/p&gt;
+&lt;p&gt;For demonstration purposes, let’s look at how the number of days with snowcover changed in Germany over the years, a task I came up with this winter, while looking out of the window and, well, missing snow. As mentioned, we will use R-package rdwd, which &lt;a href=&#34;https://bookdown.org/brry/rdwd/&#34;&gt;ships with an excellent documentation&lt;/a&gt; that we can use to look up how to find the data we are interested in, download it and load it into R.&lt;/p&gt;
+&lt;p&gt;By and at large, DWD-datasets can be divided into two categories:&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;Data associated with a discrete weather station&lt;/li&gt;
+&lt;li&gt;Gridded data spanning a larger area (usually all of Germany)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;As we are interested in snow cover data for all of Germany, we will look into the gridded data.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# first let&amp;#39;s get our R-session set up properly
+library(tidyverse) # this is for data-wrangling and -visualisation 
+library(rdwd) # this is where we get our data from
+library(raster) # this will help us work with raster data
+library(sp) # this is used here to convert between spatial data formats
+library(paletteer) # pretty color palettes for plots
+library(magick) # his will be used to render the final animation
+
+# The next step is to locate the data we are interested in on the CDC-Server
+
+# Load the adresses of all available files 
+data(gridIndex)
+# only keep the adresses of data we are interested in
+links &amp;lt;- gridIndex[str_detect(gridIndex, &amp;quot;^annual/snowcover_days/grids&amp;quot;)]
+head(links, n = 3) #inspect what we&amp;#39;ve got&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_1951_17.asc.gz&amp;quot;
+## [2] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_1952_17.asc.gz&amp;quot;
+## [3] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_1953_17.asc.gz&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;tail(links, n = 3)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_2016_17.asc.gz&amp;quot;
+## [2] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_2017_17.asc.gz&amp;quot;
+## [3] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_2018_17.asc.gz&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So we managed to locate the position of 68 files of gridded snow-cover data. Each file contains the data for a single year and we have files spanning the period from 1951 to 2018. Now that we know where we can find the data, the next steps are:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Downloading the data to your hard disc&lt;/li&gt;
+&lt;li&gt;Actually loading the data into R&lt;/li&gt;
+&lt;li&gt;Shaping the data into a format to work on with&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This is achieved mainly by two functions provided by &lt;code&gt;rdwd&lt;/code&gt;. We will download the data with &lt;code&gt;dataDWD&lt;/code&gt; and load it with &lt;code&gt;readDWD&lt;/code&gt;. Please note that the downloaded files are stored on your hard drive and take up approximately 200 MB of space. As we need to download all 68 files, we will iterate over every element of &lt;code&gt;links&lt;/code&gt;, applying the function-in-question on the way.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;map(
+  links, 
+  dataDWD, 
+  base = gridbase, 
+  joinbf = TRUE, 
+  read = FALSE
+  )
+
+# Executed like this, the downloaded files will be stored in a subdirectory
+# named &amp;quot;DWDdata/&amp;quot;. Let&amp;#39;s see what we&amp;#39;ve got!
+
+lokallinks &amp;lt;- list.files(&amp;quot;DWDdata/&amp;quot;)
+
+# In the next step we will do something a bit more complex.
+# The goal is to load the downloaded files into R and give them a structure
+# that is convenient to work with. As we want this to happen with all 68
+# files, we will define a function that loads a file and returns the data 
+# in the desired way and then apply said function to every file.
+
+grabmydata &amp;lt;- function(file){
+  
+  # first let&amp;#39;s load the data and store it in a nice data.frame
+  df &amp;lt;- readDWD(paste0(&amp;quot;DWDdata/&amp;quot;, file)) %&amp;gt;% 
+    as(&amp;quot;SpatialPixelsDataFrame&amp;quot;) %&amp;gt;% 
+    as.data.frame()
+  
+  # give it some nice coloumn names
+  colnames(df) &amp;lt;- c(&amp;quot;value&amp;quot;, &amp;quot;x&amp;quot;, &amp;quot;y&amp;quot;)
+  
+  # next we want to know the year that the data corresponds to
+  year &amp;lt;- file %&amp;gt;% 
+    str_remove(&amp;quot;annual_snowcover_days_grids_germany_annual_snowcover_days_&amp;quot;) %&amp;gt;% 
+    str_remove(&amp;quot;_17.asc.gz&amp;quot;) %&amp;gt;% 
+    as.integer()
+  
+  # Now just store the year as another variable in the data.frame
+  df %&amp;gt;% mutate(year = year)
+}
+
+# Now that we have a function that knows how to handle a file, iterate over
+# all files and append the result rowwise.
+df &amp;lt;- map_dfr(lokallinks, grabmydata)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now that we have all the data nicely loaded into our global environment, we can start visualizing them. In a first step, let’s look at the situation in the year 2008. We can later expand this to include all years.&lt;/p&gt;
+&lt;p&gt;There is one little catch, though. To make the figure more visually appealing, we will apply a logarithmic color gradient, while keeping the actual scale linear.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df_08 &amp;lt;- df %&amp;gt;% 
+  filter(year == 2008)
+
+# In the plot legend we want to see what the color looks like for the following 
+# numbers of days of snow cover:
+
+snow_days_legend &amp;lt;- c(0.1, 0.3, 1, 3, 10, 30)
+
+ggplot(
+  data = df_08,
+  aes(
+    x = x,
+    y = y,
+    fill = log10(value)
+  )
+) +
+  geom_tile() +
+    annotate(
+      geom = &amp;quot;label&amp;quot;, x = max(df$x) - 140000, y = min(df$y) - 10000,
+      label = &amp;quot;source: Deutscher Wetterdienst&amp;quot;,
+      size = 2
+    ) +
+  labs(
+    title = &amp;quot;Total days of snow in 2008&amp;quot;,
+    fill = &amp;quot;days with\nsnow-cover&amp;quot;
+  ) +
+  scale_fill_paletteer_c(
+    &amp;quot;ggthemes::Classic Orange-Blue&amp;quot;,
+    limits = log10(c(0.1, 60)),
+    breaks = log10(snow_days_legend),
+    labels = snow_days_legend
+  ) +
+  theme_bw() +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+  )&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;Schnee_2008.png&#34; width=&#34;400px&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Now this is nice, but it only shows us the situation for a single year, which tells us nothing about how the snow-cover-situation changed over time. Question is: how do we include the plots for the other years? One might be tempted to work with facets here, but faceting 68 plots will result in a visual overload. The better solution is to build a little gif.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df_list &amp;lt;- df %&amp;gt;% 
+  group_split(year)
+
+# Make a time-series vector for iteration
+ts &amp;lt;- map_dbl(df_list, function(x) {first(x$year)})
+
+# here we iterate along the years, plotting each annual dataset and subsequently
+# saving the resulting image to the hard disc. This might take a while. The
+# produced data has a size of ~7Mb
+
+# ATTENTION: note that I am saving the plots in a subdirectory called &amp;quot;facets&amp;quot;.
+# ggsave will not create that subdir automatically, so you may have to set it up
+# manually. I decided not to create it in this code chunk as that would equal
+# messing up other peoples folder-system, which I was told is bad style.
+
+for (i in seq_along(ts)){
+  gif_facet &amp;lt;- ggplot(
+    data = df_list[[i]],
+    aes(
+      x = x,
+      y = y,
+      fill = log10(value)
+    )
+  ) +
+    geom_tile() +
+    annotate(
+      geom = &amp;quot;label&amp;quot;, x = max(df$x) - 140000, y = min(df$y) - 10000,
+      label = &amp;quot;source: Deutscher Wetterdienst&amp;quot;,
+      size = 2
+    ) +
+    labs(
+      title = paste0(&amp;quot;Total days of snow in &amp;quot;, ts[i]),
+      fill = &amp;quot;days with\nsnow-cover&amp;quot;
+    ) +
+    scale_fill_paletteer_c(
+      &amp;quot;ggthemes::Classic Orange-Blue&amp;quot;,
+      limits = log10(c(0.1, 60)),
+      breaks = log10(snow_days_legend),
+      labels = snow_days_legend
+    ) +
+    theme_bw() +
+    theme(
+      axis.title = element_blank(),
+      axis.text = element_blank(),
+    )
+  
+  ggsave(
+    filename = paste0(&amp;quot;facets/snow_&amp;quot;, ts[i],&amp;quot;.png&amp;quot;), # make sure this works on your machine!
+    plot = gif_facet,
+    width = 10, height = 12, units = &amp;quot;cm&amp;quot;, dpi = 150
+  )
+}
+
+# get the path of the created images
+plotlist &amp;lt;- list.files(&amp;quot;facets/&amp;quot;, pattern = &amp;quot;.png$&amp;quot;)
+
+# construct the actual gif
+image_write_gif(
+  image_read(paste0(&amp;quot;facets/&amp;quot;, plotlist)),
+  path = &amp;quot;Snowdays_in_Ger.gif&amp;quot;,
+  delay = 0.5
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;featured.gif&#34; width=&#34;400px&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

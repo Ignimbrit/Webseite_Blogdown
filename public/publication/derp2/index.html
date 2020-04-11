@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.8.0">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="Sören Wilke">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="Gualda et al. (2018) applied rhyolite-MELTS and DERP to several case studies and noted that DERP has a lower precision and yields distributions of estimated pressures that are significantly different from other geobarometers based on the H2O–CO2 of glass inclusions and amphibole geobarometry. In an attempt to clarify the discrepancy between rhyolite-MELT and DERP, Gualda et al. (2018) describe several problems with DERP. In the following sections we address the critical points mentioned in the comment of Gualda et al. (2018).">
+
+  
+  <link rel="alternate" hreflang="en-us" href="/publication/derp2/">
+
+  
+
+
+  
+  
+  
+  <meta name="theme-color" content="#795548">
+  
+
+  
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-1/css/all.min.css" integrity="sha256-4w9DunooKSr3MFXHXWyFER38WmPdm361bQS/2KUWZbU=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin="anonymous" title="hl-light">
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark" disabled>
+        
+      
+    
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" integrity="sha256-SHMGCYmST46SoyGgo4YR/9AlK1vf3ff84Aq9yK4hdqM=" crossorigin="anonymous">
+    
+
+    
+
+    
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.1.2/lazysizes.min.js" integrity="sha256-Md1qLToewPeKjfAHU1zyPwOutccPAm5tahnaw7Osw0A=" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+        
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,700%7CRoboto:400,400italic,700%7CRoboto+Mono&display=swap">
+  
+
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.css">
+
+  
+
+
+
+
+  
+
+
+  
+
+  <link rel="manifest" href="/index.webmanifest">
+  <link rel="icon" type="image/png" href="/images/icon_hu77b1023befc97d4c3f8484db1ec7f5fe_13362_32x32_fill_lanczos_center_2.png">
+  <link rel="apple-touch-icon" type="image/png" href="/images/icon_hu77b1023befc97d4c3f8484db1ec7f5fe_13362_192x192_fill_lanczos_center_2.png">
+
+  <link rel="canonical" href="/publication/derp2/">
+
+  
+  
+  
+  
+  
+    
+    
+  
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="twitter:site" content="@SorenWilke">
+  <meta property="twitter:creator" content="@SorenWilke">
+  
+  <meta property="og:site_name" content="Dr. rer nat. Sören Wilke">
+  <meta property="og:url" content="/publication/derp2/">
+  <meta property="og:title" content="Rhyolite-MELTS vs DERP – Reply to Comment by Gualda et al. on ‘The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry’ by Wilke et al. (2017), Journal of Petrology, 58, No. 4, 789–818 | Dr. rer nat. Sören Wilke">
+  <meta property="og:description" content="Gualda et al. (2018) applied rhyolite-MELTS and DERP to several case studies and noted that DERP has a lower precision and yields distributions of estimated pressures that are significantly different from other geobarometers based on the H2O–CO2 of glass inclusions and amphibole geobarometry. In an attempt to clarify the discrepancy between rhyolite-MELT and DERP, Gualda et al. (2018) describe several problems with DERP. In the following sections we address the critical points mentioned in the comment of Gualda et al. (2018)."><meta property="og:image" content="img/map[gravatar:%!s(bool=false) shape:circle]">
+  <meta property="twitter:image" content="img/map[gravatar:%!s(bool=false) shape:circle]"><meta property="og:locale" content="en-us">
+  
+    
+      <meta property="article:published_time" content="2019-02-01T00:00:00&#43;00:00">
+    
+    <meta property="article:modified_time" content="2019-02-01T00:00:00&#43;00:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "/publication/derp2/"
+  },
+  "headline": "Rhyolite-MELTS vs DERP – Reply to Comment by Gualda et al. on ‘The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry’ by Wilke et al. (2017), Journal of Petrology, 58, No. 4, 789–818",
+  
+  "datePublished": "2019-02-01T00:00:00Z",
+  "dateModified": "2019-02-01T00:00:00Z",
+  
+  "author": {
+    "@type": "Person",
+    "name": "Sören Wilke"
+  },
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dr. rer nat. Sören Wilke",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "/images/icon_hu77b1023befc97d4c3f8484db1ec7f5fe_13362_192x192_fill_lanczos_center_2.png"
+    }
+  },
+  "description": "Gualda et al. (2018) applied rhyolite-MELTS and DERP to several case studies and noted that DERP has a lower precision and yields distributions of estimated pressures that are significantly different from other geobarometers based on the H2O–CO2 of glass inclusions and amphibole geobarometry. In an attempt to clarify the discrepancy between rhyolite-MELT and DERP, Gualda et al. (2018) describe several problems with DERP. In the following sections we address the critical points mentioned in the comment of Gualda et al. (2018)."
+}
+</script>
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+
+  <title>Rhyolite-MELTS vs DERP – Reply to Comment by Gualda et al. on ‘The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry’ by Wilke et al. (2017), Journal of Petrology, 58, No. 4, 789–818 | Dr. rer nat. Sören Wilke</title>
+
+</head>
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" >
+
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+  
+
+
+
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+  <div class="container">
+
+    
+    <div class="d-none d-lg-inline-flex">
+      <a class="navbar-brand" href="/">Dr. rer nat. Sören Wilke</a>
+    </div>
+    
+
+    
+    <button type="button" class="navbar-toggler" data-toggle="collapse"
+            data-target="#navbar-content" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+    <span><i class="fas fa-bars"></i></span>
+    </button>
+    
+
+    
+    <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+      <a class="navbar-brand" href="/">Dr. rer nat. Sören Wilke</a>
+    </div>
+    
+
+    
+    
+    <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+      
+      <ul class="navbar-nav d-md-inline-flex">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#experience"><span>Experience</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts"><span>Posts</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#featured"><span>Publications</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#contact"><span>Contact</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/impressum"><span>Impressum</span></a>
+        </li>
+
+        
+        
+
+      
+
+        
+      </ul>
+    </div>
+
+    <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+      
+      <li class="nav-item">
+        <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+      </li>
+      
+
+      
+      <li class="nav-item dropdown theme-dropdown">
+        <a href="#" class="nav-link js-theme-selector" data-toggle="dropdown" aria-haspopup="true">
+          <i class="fas fa-palette" aria-hidden="true"></i>
+        </a>
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item js-set-theme-light">
+            <span>Light</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-dark">
+            <span>Dark</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-auto">
+            <span>Automatic</span>
+          </a>
+        </div>
+      </li>
+      
+
+      
+
+    </ul>
+
+  </div>
+</nav>
+
+
+  <div class="pub">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1>Rhyolite-MELTS vs DERP – Reply to Comment by Gualda et al. on ‘The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry’ by Wilke et al. (2017), Journal of Petrology, 58, No. 4, 789–818</h1>
+
+  
+
+  
+    
+
+
+<div class="article-metadata">
+
+  
+  
+  
+  
+  <div>
+    
+
+  
+  <span><a href="/authors/admin/">Sören Wilke</a></span>, <span><a href="/authors/francois-holtz/">Francois Holtz</a></span>, <span><a href="/authors/xiaoyan-li/">Xiaoyan Li</a></span>, <span><a href="/authors/david-a.-neave/">David A. Neave</a></span>, <span><a href="/authors/renat-almeev/">Renat Almeev</a></span>
+  </div>
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+    
+    February 2019
+  </span>
+  
+
+  
+
+  
+
+  
+  
+  
+
+  
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+<div class="btn-links mb-3">
+  
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+<button type="button" class="btn btn-outline-primary my-1 mr-1 js-cite-modal"
+        data-filename="/publication/derp2/cite.bib">
+  Cite
+</button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a class="btn btn-outline-primary my-1 mr-1" href="https://doi.org/10.1093/petrology/egz002" target="_blank" rel="noopener">
+  DOI
+</a>
+
+
+
+</div>
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    
+    <h3>Abstract</h3>
+    <p class="pub-abstract">The estimation of magma storage conditions is crucial for the understanding of magma plumbing systems (e.g. Putirka, 2017). In addition to geophysical approaches, petrologic and geochemical investigations of volcanic rocks are the only methods available to constrain temperature, pressure, volatile and oxygen fugacities prevailing in magma chambers, as well as the time-scales over which magmatic processes operate. Applying experimentally calibrated thermobarometeric models to analyses of coexisting phases (e.g. Blundy &amp; Cashman, 2008) or the trace element content of solid phases (e.g. Thomas et al., 2010) is the most common approach used in petrology to estimate pressures and temperatures of magma storage. The quality of the extracted pressures and&hellip;</p>
+    
+
+    
+    <div class="row">
+      <div class="col-md-1"></div>
+      <div class="col-md-10">
+        <div class="row">
+          <div class="col-12 col-md-3 pub-row-heading">Type</div>
+          <div class="col-12 col-md-9">
+            
+            
+            <a href="/publication/#2">
+              Journal article
+            </a>
+            
+          </div>
+        </div>
+      </div>
+      <div class="col-md-1"></div>
+    </div>
+    <div class="d-md-none space-below"></div>
+    
+
+    
+    <div class="row">
+      <div class="col-md-1"></div>
+      <div class="col-md-10">
+        <div class="row">
+          <div class="col-12 col-md-3 pub-row-heading">Publication</div>
+          <div class="col-12 col-md-9"><em>Journal of Petrology, Volume 60</em>(4)</div>
+        </div>
+      </div>
+      <div class="col-md-1"></div>
+    </div>
+    <div class="d-md-none space-below"></div>
+    
+
+    <div class="space-below"></div>
+
+    <div class="article-style"></div>
+
+    
+
+
+
+
+
+<div class="article-tags">
+  
+  <a class="badge badge-light" href="/tags/source-themes/">Source Themes</a>
+  
+</div>
+
+
+
+<div class="share-box" aria-hidden="true">
+  <ul class="share">
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://twitter.com/intent/tweet?url=/publication/derp2/&amp;text=Rhyolite-MELTS%20vs%20DERP%20%e2%80%93%20Reply%20to%20Comment%20by%20Gualda%20et%20al.%20on%20%e2%80%98The%20Effect%20of%20Anorthite%20Content%20and%20Water%20on%20Quartz%e2%80%93Feldspar%20Cotectic%20Compositions%20in%20the%20Rhyolitic%20System%20and%20Implications%20for%20Geobarometry%e2%80%99%20by%20Wilke%20et%20al.%20%282017%29,%20Journal%20of%20Petrology,%2058,%20No.%204,%20789%e2%80%93818" target="_blank" rel="noopener" class="share-btn-twitter">
+          <i class="fab fa-twitter"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.facebook.com/sharer.php?u=/publication/derp2/&amp;t=Rhyolite-MELTS%20vs%20DERP%20%e2%80%93%20Reply%20to%20Comment%20by%20Gualda%20et%20al.%20on%20%e2%80%98The%20Effect%20of%20Anorthite%20Content%20and%20Water%20on%20Quartz%e2%80%93Feldspar%20Cotectic%20Compositions%20in%20the%20Rhyolitic%20System%20and%20Implications%20for%20Geobarometry%e2%80%99%20by%20Wilke%20et%20al.%20%282017%29,%20Journal%20of%20Petrology,%2058,%20No.%204,%20789%e2%80%93818" target="_blank" rel="noopener" class="share-btn-facebook">
+          <i class="fab fa-facebook"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="mailto:?subject=Rhyolite-MELTS%20vs%20DERP%20%e2%80%93%20Reply%20to%20Comment%20by%20Gualda%20et%20al.%20on%20%e2%80%98The%20Effect%20of%20Anorthite%20Content%20and%20Water%20on%20Quartz%e2%80%93Feldspar%20Cotectic%20Compositions%20in%20the%20Rhyolitic%20System%20and%20Implications%20for%20Geobarometry%e2%80%99%20by%20Wilke%20et%20al.%20%282017%29,%20Journal%20of%20Petrology,%2058,%20No.%204,%20789%e2%80%93818&amp;body=/publication/derp2/" target="_blank" rel="noopener" class="share-btn-email">
+          <i class="fas fa-envelope"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.linkedin.com/shareArticle?url=/publication/derp2/&amp;title=Rhyolite-MELTS%20vs%20DERP%20%e2%80%93%20Reply%20to%20Comment%20by%20Gualda%20et%20al.%20on%20%e2%80%98The%20Effect%20of%20Anorthite%20Content%20and%20Water%20on%20Quartz%e2%80%93Feldspar%20Cotectic%20Compositions%20in%20the%20Rhyolitic%20System%20and%20Implications%20for%20Geobarometry%e2%80%99%20by%20Wilke%20et%20al.%20%282017%29,%20Journal%20of%20Petrology,%2058,%20No.%204,%20789%e2%80%93818" target="_blank" rel="noopener" class="share-btn-linkedin">
+          <i class="fab fa-linkedin-in"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://web.whatsapp.com/send?text=Rhyolite-MELTS%20vs%20DERP%20%e2%80%93%20Reply%20to%20Comment%20by%20Gualda%20et%20al.%20on%20%e2%80%98The%20Effect%20of%20Anorthite%20Content%20and%20Water%20on%20Quartz%e2%80%93Feldspar%20Cotectic%20Compositions%20in%20the%20Rhyolitic%20System%20and%20Implications%20for%20Geobarometry%e2%80%99%20by%20Wilke%20et%20al.%20%282017%29,%20Journal%20of%20Petrology,%2058,%20No.%204,%20789%e2%80%93818%20/publication/derp2/" target="_blank" rel="noopener" class="share-btn-whatsapp">
+          <i class="fab fa-whatsapp"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://service.weibo.com/share/share.php?url=/publication/derp2/&amp;title=Rhyolite-MELTS%20vs%20DERP%20%e2%80%93%20Reply%20to%20Comment%20by%20Gualda%20et%20al.%20on%20%e2%80%98The%20Effect%20of%20Anorthite%20Content%20and%20Water%20on%20Quartz%e2%80%93Feldspar%20Cotectic%20Compositions%20in%20the%20Rhyolitic%20System%20and%20Implications%20for%20Geobarometry%e2%80%99%20by%20Wilke%20et%20al.%20%282017%29,%20Journal%20of%20Petrology,%2058,%20No.%204,%20789%e2%80%93818" target="_blank" rel="noopener" class="share-btn-weibo">
+          <i class="fab fa-weibo"></i>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+
+
+
+
+
+  
+  
+  
+    
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+      
+      <img class="avatar mr-3 avatar-circle" src="/authors/admin/avatar_hu1f94f36023a4535ea796a397ef5c46d9_676750_270x270_fill_q90_lanczos_center.jpg" alt="Sören Wilke">
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="/">Sören Wilke</a></h5>
+      <h6 class="card-subtitle">Dr. rer nat Earth Science</h6>
+      <p class="card-text">My research interests include hydrogeochemistry, geologic modelling and geostatistics.</p>
+      <ul class="network-icon" aria-hidden="true">
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="/#contact" >
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://twitter.com/SorenWilke" target="_blank" rel="noopener">
+        <i class="fab fa-twitter"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://github.com/ignimbrit" target="_blank" rel="noopener">
+        <i class="fab fa-github"></i>
+      </a>
+    </li>
+  
+</ul>
+
+    </div>
+  </div>
+
+
+  
+    
+    
+
+
+
+
+
+  
+  
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="/authors/francois-holtz/"></a></h5>
+      
+      
+      <ul class="network-icon" aria-hidden="true">
+  
+</ul>
+
+    </div>
+  </div>
+
+
+  
+    
+    
+
+
+
+
+
+  
+  
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="/authors/xiaoyan-li/"></a></h5>
+      
+      
+      <ul class="network-icon" aria-hidden="true">
+  
+</ul>
+
+    </div>
+  </div>
+
+
+  
+    
+    
+
+
+
+
+
+  
+  
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="/authors/david-a.-neave/"></a></h5>
+      
+      
+      <ul class="network-icon" aria-hidden="true">
+  
+</ul>
+
+    </div>
+  </div>
+
+
+  
+    
+    
+
+
+
+
+
+  
+  
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="/authors/renat-almeev/"></a></h5>
+      
+      
+      <ul class="network-icon" aria-hidden="true">
+  
+</ul>
+
+    </div>
+  </div>
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <div class="article-widget content-widget-hr">
+    <h3>Related</h3>
+    <ul>
+      
+      <li><a href="/publication/derp1/">The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry</a></li>
+      
+      <li><a href="/publication/promotion/">The system quartz-albite-orthoclase-anorthite-H2O as a geobarometer: experimental calibration and application to rhyolites of the Snake River Plain, Yellowstone, USA</a></li>
+      
+      <li><a href="/publication/microprobe/">A Practical Method for Accurate Measurement of Trace Level Fluorine in Mg‐ and Fe‐Bearing Minerals and Glasses Using Electron Probe Microanalysis</a></li>
+      
+      <li><a href="/publication/carodata/">Experimental investigation of the effect of Ca, Fe and Ti on cotectic compositions of the rhyolitic system</a></li>
+      
+    </ul>
+  </div>
+  
+
+
+
+  </div>
+</div>
+
+      
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+
+      
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/languages/r.min.js"></script>
+        
+      
+
+    
+
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js" integrity="sha256-EErZamuLefUnbMBQbsEqu1USa+btR2oIlCpBJbyD4/g=" crossorigin="anonymous"></script>
+    
+
+    
+    
+    <script>const code_highlighting = true;</script>
+    
+
+    
+    
+    <script>const isSiteThemeDark = false;</script>
+    
+
+    
+    
+    
+    
+    
+    
+    <script>
+      const search_config = {"indexURI":"/index.json","minLength":1,"threshold":0.3};
+      const i18n = {"no_results":"No results found","placeholder":"Search...","results":"results found"};
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.37431be2d92d7fb0160054761ab79602.js"></script>
+
+    
+
+
+
+
+
+
+  
+  
+  <div class="container">
+    <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    © Sören Wilke 2020 &middot; 
+
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" class="back-to-top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+  </div>
+  
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

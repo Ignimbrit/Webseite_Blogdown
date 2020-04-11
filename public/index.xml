@@ -1,0 +1,592 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Dr. rer nat. Sören Wilke</title>
+    <link>/</link>
+      <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <description>Dr. rer nat. Sören Wilke</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2020</copyright><lastBuildDate>Sun, 05 Apr 2020 18:28:03 +0200</lastBuildDate>
+    <image>
+      <url>img/map[gravatar:%!s(bool=false) shape:circle]</url>
+      <title>Dr. rer nat. Sören Wilke</title>
+      <link>/</link>
+    </image>
+    
+    <item>
+      <title>Example Page 1</title>
+      <link>/courses/example/example1/</link>
+      <pubDate>Sun, 05 May 2019 00:00:00 +0100</pubDate>
+      <guid>/courses/example/example1/</guid>
+      <description>&lt;p&gt;In this tutorial, I&amp;rsquo;ll share my top 10 tips for getting started with Academic:&lt;/p&gt;
+&lt;h2 id=&#34;tip-1&#34;&gt;Tip 1&lt;/h2&gt;
+&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+&lt;h2 id=&#34;tip-2&#34;&gt;Tip 2&lt;/h2&gt;
+&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Example Page 2</title>
+      <link>/courses/example/example2/</link>
+      <pubDate>Sun, 05 May 2019 00:00:00 +0100</pubDate>
+      <guid>/courses/example/example2/</guid>
+      <description>&lt;p&gt;Here are some more tips for getting started with Academic:&lt;/p&gt;
+&lt;h2 id=&#34;tip-3&#34;&gt;Tip 3&lt;/h2&gt;
+&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+&lt;h2 id=&#34;tip-4&#34;&gt;Tip 4&lt;/h2&gt;
+&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Example Talk</title>
+      <link>/talk/example/</link>
+      <pubDate>Sat, 01 Jun 2030 13:00:00 +0000</pubDate>
+      <guid>/talk/example/</guid>
+      <description>&lt;div class=&#34;alert alert-note&#34;&gt;
+  &lt;div&gt;
+    Click on the &lt;strong&gt;Slides&lt;/strong&gt; button above to view the built-in slides feature.
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Slides can be added in a few ways:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Create&lt;/strong&gt; slides using Academic&amp;rsquo;s 
+&lt;a href=&#34;https://sourcethemes.com/academic/docs/managing-content/#create-slides&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&lt;em&gt;Slides&lt;/em&gt;&lt;/a&gt; feature and link using &lt;code&gt;slides&lt;/code&gt; parameter in the front matter of the talk file&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Upload&lt;/strong&gt; an existing slide deck to &lt;code&gt;static/&lt;/code&gt; and link using &lt;code&gt;url_slides&lt;/code&gt; parameter in the front matter of the talk file&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Embed&lt;/strong&gt; your slides (e.g. Google Slides) or presentation video on this page using 
+&lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;shortcodes&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Further talk details can easily be added to this page using &lt;em&gt;Markdown&lt;/em&gt; and $\rm \LaTeX$ math code.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Digital Point Counting for Mineralogical Thin Section</title>
+      <link>/post/mincountr/</link>
+      <pubDate>Fri, 10 Apr 2020 00:00:00 +0000</pubDate>
+      <guid>/post/mincountr/</guid>
+      <description>
+
+
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Point_counting_(geology)&#34;&gt;Mineral point counting&lt;/a&gt; in &lt;a href=&#34;https://en.wikipedia.org/wiki/Thin_section&#34;&gt;geological thin sections&lt;/a&gt; is a simple yet very useful technique that aims at determining the relative proportion of different minerals within a rock. Quantifying this can give insight on the evolution of a magma within different stages of melt evolution or even underpin comparisons of similar melts from different magmatic complexes. Point counting in it’s classical form is, however, also &lt;a href=&#34;https://www.youtube.com/watch?v=3YJHryX7f1U&#34;&gt;famously laborious&lt;/a&gt;, as it traditionally involves manually shifting the microscopes stage by a fixed interval and basically keeping a tally of what you see at each position.&lt;/p&gt;
+&lt;p&gt;With the advent of computerized image processing techniques, digital point counting offers the potential to gather the desired information at a fraction of the time and effort used for the manual technique. This makes it possible to apply point counting to large databases of thin section imagery. I would argue that being able to massively broaden the base of available point counting data by (semi-)automating the gathering process is in itself a significant contribution to the importance of the role that point counting can play in geological investigations.&lt;/p&gt;
+&lt;p&gt;In this blogpost we will explore possibilities for digital point counting using &lt;a href=&#34;https://www.r-project.org/&#34;&gt;R&lt;/a&gt; and the &lt;a href=&#34;https://github.com/Ignimbrit/mincountr/blob/master/README.md&#34;&gt;mincountr&lt;/a&gt; library, a little package I wrote to bundle a few basic tools to ease some of the more repetitive tasks of that subject.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# You can install the mincountr package from github
+# remotes::install_github(&amp;quot;Ignimbrit/mincountr&amp;quot;)
+
+library(mincountr)
+library(ggplot2)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Say you have collected an image from a mineral-bearing thin section e.g. in an electron microprobe session and wonder about the relative share of the different phases in your sample. Your image might look something like this:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;myimage &amp;lt;- mcr_load_image(
+  system.file(&amp;quot;extdata&amp;quot;, &amp;quot;testim.png&amp;quot;, package = &amp;quot;mincountr&amp;quot;)
+  )
+plot(myimage)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2020-04-10-mincountr/index_files/figure-html/load%20image-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;As you can see, the different levels of brightness in the image allows the observer to distinguish between several distinct phases. There is a large, very bright mineral, some lightgrey minerals, a darkgrey, glassy matrix, some black holes and so on. With &lt;code&gt;mincountr&lt;/code&gt; we are able to translate this qualitative optical assessment into practical numbers. First let’s have a look at the density-distribution (like a continuous histogram) of the images brightness.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;mcr_inspect_phases(myimage)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2020-04-10-mincountr/index_files/figure-html/plot%20brightness-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Here we can see that the four phases we distinguished in the image above show up in the density distribution as distinct peaks of specific brightness values. We can use this to assign a brightness-range to certain phases.
+The peak on the far left (most dark) corresponds likely to the hole we’ve seen in our thin section image. The peak’s value range lays between value ~0-0.05. Other peaks (from left to right) range from 0.3-0.45 (glassy matrix?), from 0.5-0.65 (light gray minerals?) and from 0.92-1 (bright minerals?). Let me illustrate what I mean:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;mcr_inspect_phases(myimage) +
+  ggplot2::geom_vline(
+    xintercept = c(0, 0.05, 0.3, 0.45, 0.5, 0.65, 0.92, 1),
+    color = &amp;quot;red&amp;quot;
+      )&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2020-04-10-mincountr/index_files/figure-html/illustrate%20peakborders-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Now in this example we just chose the borders of the peak by hand. This is probably the safest method of constraining your brightness-levels, as it allows you to chip in your personal mineralogical expertise. However, sometimes you have a large stack of images you want to work with and probably not the time to constrain peak-ranges by hand every single time. This is why mincountr comes with an automatic mechanism to generate those numbers for you.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;myconstrains &amp;lt;- mcr_autoconstrain(myimage)
+print(myconstrains)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 4 x 4
+##      x1 peakpos     x2    ID
+##   &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt;
+## 1 0       0     0.0283     1
+## 2 0.338   0.382 0.437      2
+## 3 0.501   0.559 0.612      3
+## 4 0.963   0.989 1          4&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The &lt;code&gt;mcr_autoconstrain&lt;/code&gt; function automatically detects peaks and notes their position (&lt;code&gt;peakpos&lt;/code&gt;) and then goes on and calculates their borders both on the left-hand-side (&lt;code&gt;x1&lt;/code&gt;) and on the right hand side (&lt;code&gt;x2&lt;/code&gt;). Under the hood, &lt;code&gt;mcr_autoconstrain&lt;/code&gt; identifies turning points in the brightness-“spectra”, cuts it into pieces, one piece per peak, and then loops over the single-peak spectra-pieces to calculate the half-height-width.&lt;/p&gt;
+&lt;p&gt;Now we have all the information we need to assign certain areas of our original image to distinct phases. The mincountr-package comes with a function that lets you inspect what this assignment looks like.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;mcr_inspect_assignment(
+  myimage,
+  lhs = myconstrains$x1,
+  rhs = myconstrains$x2
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2020-04-10-mincountr/index_files/figure-html/check%20assignment-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;As every pixel in the original image was now assigned to one of the 7 levels shown in the picture above, we can go ahead and just count the pixels and then calculate the relative share of each group.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;myresult &amp;lt;- mcr_herd_minerals(
+  myimage,
+  lhs = myconstrains$x1,
+  rhs = myconstrains$x2
+)
+print(myresult)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 7 x 3
+##   Phase_ID pixels proportion_percentage
+##      &amp;lt;int&amp;gt;  &amp;lt;int&amp;gt;                 &amp;lt;dbl&amp;gt;
+## 1        1  34862                  9.88
+## 2        2  23583                  6.68
+## 3        3  97086                 27.5 
+## 4        4  18786                  5.32
+## 5        5  70327                 19.9 
+## 6        6  23485                  6.66
+## 7        7  84749                 24.0&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Working with climate data from the German Meteorological Service (DWD)</title>
+      <link>/post/working-with-rdwd/</link>
+      <pubDate>Wed, 08 Apr 2020 00:00:00 +0000</pubDate>
+      <guid>/post/working-with-rdwd/</guid>
+      <description>
+
+
+&lt;p&gt;Many tasks in the realm of Hydrogeology require data from meteorological observations to be taken into account. If you are working on such a project that happens to be located in Germany, you can count yourself lucky, because the &lt;a href=&#34;www.dwd.de&#34;&gt;Deutscher Wetterdienst&lt;/a&gt; (DWD, German Meteorological Service) is providing a cornucopia of both brand new and historic data for free via its &lt;a href=&#34;https://opendata.dwd.de/climate_environment/CDC/&#34;&gt;climate datacenter&lt;/a&gt; (CDC). The interface to that server, however, can be somewhat confusing at first, due to the mass of very different data formats and the poignant absence of any meaningful GUI. In this post we will therefore explore how we can use &lt;a href=&#34;www.r-project.org&#34;&gt;R&lt;/a&gt; and specifically the &lt;a href=&#34;https://cran.r-project.org/web/packages/rdwd/index.html&#34;&gt;rdwd&lt;/a&gt; library to access data from the CDC and turn it into a (hopefully) meaningful visualization.&lt;/p&gt;
+&lt;p&gt;For demonstration purposes, let’s look at how the number of days with snowcover changed in Germany over the years, a task I came up with this winter, while looking out of the window and, well, missing snow. As mentioned, we will use R-package rdwd, which &lt;a href=&#34;https://bookdown.org/brry/rdwd/&#34;&gt;ships with an excellent documentation&lt;/a&gt; that we can use to look up how to find the data we are interested in, download it and load it into R.&lt;/p&gt;
+&lt;p&gt;By and at large, DWD-datasets can be divided into two categories:&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;Data associated with a discrete weather station&lt;/li&gt;
+&lt;li&gt;Gridded data spanning a larger area (usually all of Germany)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;As we are interested in snow cover data for all of Germany, we will look into the gridded data.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# first let&amp;#39;s get our R-session set up properly
+library(tidyverse) # this is for data-wrangling and -visualisation 
+library(rdwd) # this is where we get our data from
+library(raster) # this will help us work with raster data
+library(sp) # this is used here to convert between spatial data formats
+library(paletteer) # pretty color palettes for plots
+library(magick) # his will be used to render the final animation
+
+# The next step is to locate the data we are interested in on the CDC-Server
+
+# Load the adresses of all available files 
+data(gridIndex)
+# only keep the adresses of data we are interested in
+links &amp;lt;- gridIndex[str_detect(gridIndex, &amp;quot;^annual/snowcover_days/grids&amp;quot;)]
+head(links, n = 3) #inspect what we&amp;#39;ve got&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_1951_17.asc.gz&amp;quot;
+## [2] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_1952_17.asc.gz&amp;quot;
+## [3] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_1953_17.asc.gz&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;tail(links, n = 3)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_2016_17.asc.gz&amp;quot;
+## [2] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_2017_17.asc.gz&amp;quot;
+## [3] &amp;quot;annual/snowcover_days/grids_germany_annual_snowcover_days_2018_17.asc.gz&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So we managed to locate the position of 68 files of gridded snow-cover data. Each file contains the data for a single year and we have files spanning the period from 1951 to 2018. Now that we know where we can find the data, the next steps are:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Downloading the data to your hard disc&lt;/li&gt;
+&lt;li&gt;Actually loading the data into R&lt;/li&gt;
+&lt;li&gt;Shaping the data into a format to work on with&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This is achieved mainly by two functions provided by &lt;code&gt;rdwd&lt;/code&gt;. We will download the data with &lt;code&gt;dataDWD&lt;/code&gt; and load it with &lt;code&gt;readDWD&lt;/code&gt;. Please note that the downloaded files are stored on your hard drive and take up approximately 200 MB of space. As we need to download all 68 files, we will iterate over every element of &lt;code&gt;links&lt;/code&gt;, applying the function-in-question on the way.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;map(
+  links, 
+  dataDWD, 
+  base = gridbase, 
+  joinbf = TRUE, 
+  read = FALSE
+  )
+
+# Executed like this, the downloaded files will be stored in a subdirectory
+# named &amp;quot;DWDdata/&amp;quot;. Let&amp;#39;s see what we&amp;#39;ve got!
+
+lokallinks &amp;lt;- list.files(&amp;quot;DWDdata/&amp;quot;)
+
+# In the next step we will do something a bit more complex.
+# The goal is to load the downloaded files into R and give them a structure
+# that is convenient to work with. As we want this to happen with all 68
+# files, we will define a function that loads a file and returns the data 
+# in the desired way and then apply said function to every file.
+
+grabmydata &amp;lt;- function(file){
+  
+  # first let&amp;#39;s load the data and store it in a nice data.frame
+  df &amp;lt;- readDWD(paste0(&amp;quot;DWDdata/&amp;quot;, file)) %&amp;gt;% 
+    as(&amp;quot;SpatialPixelsDataFrame&amp;quot;) %&amp;gt;% 
+    as.data.frame()
+  
+  # give it some nice coloumn names
+  colnames(df) &amp;lt;- c(&amp;quot;value&amp;quot;, &amp;quot;x&amp;quot;, &amp;quot;y&amp;quot;)
+  
+  # next we want to know the year that the data corresponds to
+  year &amp;lt;- file %&amp;gt;% 
+    str_remove(&amp;quot;annual_snowcover_days_grids_germany_annual_snowcover_days_&amp;quot;) %&amp;gt;% 
+    str_remove(&amp;quot;_17.asc.gz&amp;quot;) %&amp;gt;% 
+    as.integer()
+  
+  # Now just store the year as another variable in the data.frame
+  df %&amp;gt;% mutate(year = year)
+}
+
+# Now that we have a function that knows how to handle a file, iterate over
+# all files and append the result rowwise.
+df &amp;lt;- map_dfr(lokallinks, grabmydata)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now that we have all the data nicely loaded into our global environment, we can start visualizing them. In a first step, let’s look at the situation in the year 2008. We can later expand this to include all years.&lt;/p&gt;
+&lt;p&gt;There is one little catch, though. To make the figure more visually appealing, we will apply a logarithmic color gradient, while keeping the actual scale linear.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df_08 &amp;lt;- df %&amp;gt;% 
+  filter(year == 2008)
+
+# In the plot legend we want to see what the color looks like for the following 
+# numbers of days of snow cover:
+
+snow_days_legend &amp;lt;- c(0.1, 0.3, 1, 3, 10, 30)
+
+ggplot(
+  data = df_08,
+  aes(
+    x = x,
+    y = y,
+    fill = log10(value)
+  )
+) +
+  geom_tile() +
+    annotate(
+      geom = &amp;quot;label&amp;quot;, x = max(df$x) - 140000, y = min(df$y) - 10000,
+      label = &amp;quot;source: Deutscher Wetterdienst&amp;quot;,
+      size = 2
+    ) +
+  labs(
+    title = &amp;quot;Total days of snow in 2008&amp;quot;,
+    fill = &amp;quot;days with\nsnow-cover&amp;quot;
+  ) +
+  scale_fill_paletteer_c(
+    &amp;quot;ggthemes::Classic Orange-Blue&amp;quot;,
+    limits = log10(c(0.1, 60)),
+    breaks = log10(snow_days_legend),
+    labels = snow_days_legend
+  ) +
+  theme_bw() +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+  )&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;Schnee_2008.png&#34; width=&#34;400px&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Now this is nice, but it only shows us the situation for a single year, which tells us nothing about how the snow-cover-situation changed over time. Question is: how do we include the plots for the other years? One might be tempted to work with facets here, but faceting 68 plots will result in a visual overload. The better solution is to build a little gif.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df_list &amp;lt;- df %&amp;gt;% 
+  group_split(year)
+
+# Make a time-series vector for iteration
+ts &amp;lt;- map_dbl(df_list, function(x) {first(x$year)})
+
+# here we iterate along the years, plotting each annual dataset and subsequently
+# saving the resulting image to the hard disc. This might take a while. The
+# produced data has a size of ~7Mb
+
+# ATTENTION: note that I am saving the plots in a subdirectory called &amp;quot;facets&amp;quot;.
+# ggsave will not create that subdir automatically, so you may have to set it up
+# manually. I decided not to create it in this code chunk as that would equal
+# messing up other peoples folder-system, which I was told is bad style.
+
+for (i in seq_along(ts)){
+  gif_facet &amp;lt;- ggplot(
+    data = df_list[[i]],
+    aes(
+      x = x,
+      y = y,
+      fill = log10(value)
+    )
+  ) +
+    geom_tile() +
+    annotate(
+      geom = &amp;quot;label&amp;quot;, x = max(df$x) - 140000, y = min(df$y) - 10000,
+      label = &amp;quot;source: Deutscher Wetterdienst&amp;quot;,
+      size = 2
+    ) +
+    labs(
+      title = paste0(&amp;quot;Total days of snow in &amp;quot;, ts[i]),
+      fill = &amp;quot;days with\nsnow-cover&amp;quot;
+    ) +
+    scale_fill_paletteer_c(
+      &amp;quot;ggthemes::Classic Orange-Blue&amp;quot;,
+      limits = log10(c(0.1, 60)),
+      breaks = log10(snow_days_legend),
+      labels = snow_days_legend
+    ) +
+    theme_bw() +
+    theme(
+      axis.title = element_blank(),
+      axis.text = element_blank(),
+    )
+  
+  ggsave(
+    filename = paste0(&amp;quot;facets/snow_&amp;quot;, ts[i],&amp;quot;.png&amp;quot;), # make sure this works on your machine!
+    plot = gif_facet,
+    width = 10, height = 12, units = &amp;quot;cm&amp;quot;, dpi = 150
+  )
+}
+
+# get the path of the created images
+plotlist &amp;lt;- list.files(&amp;quot;facets/&amp;quot;, pattern = &amp;quot;.png$&amp;quot;)
+
+# construct the actual gif
+image_write_gif(
+  image_read(paste0(&amp;quot;facets/&amp;quot;, plotlist)),
+  path = &amp;quot;Snowdays_in_Ger.gif&amp;quot;,
+  delay = 0.5
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;featured.gif&#34; width=&#34;400px&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Impressum</title>
+      <link>/impressum/</link>
+      <pubDate>Sun, 05 Apr 2020 18:28:03 +0200</pubDate>
+      <guid>/impressum/</guid>
+      <description>&lt;h2 id=&#34;angaben-gemäß--5-tmg&#34;&gt;&lt;strong&gt;Angaben gemäß § 5 TMG&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Sören Wilke&lt;br&gt;
+Achillesstraße 94&lt;br&gt;
+13125 Berlin&lt;/p&gt;
+&lt;h2 id=&#34;kontakt&#34;&gt;&lt;strong&gt;Kontakt&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Telefon: +49 (0) 151 6453 2291&lt;br&gt;
+E-Mail: &lt;a href=&#34;mailto:swilke@gmx.de&#34;&gt;swilke@gmx.de&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&#34;haftung-für-inhalte&#34;&gt;&lt;strong&gt;Haftung für Inhalte&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den
+allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht
+verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu
+forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen
+Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der
+Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden
+Rechtsverletzungen werden wir diese Inhalte umgehend entfernen.&lt;/p&gt;
+&lt;h3 id=&#34;haftung-für-links&#34;&gt;&lt;strong&gt;Haftung für Links&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben.
+Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der
+verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten
+Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige Inhalte
+waren zum Zeitpunkt der Verlinkung nicht erkennbar.
+Eine permanente inhaltliche Kontrolle der verlinkten Seiten ist jedoch ohne konkrete Anhaltspunkte einer
+Rechtsverletzung nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Links
+umgehend entfernen.&lt;/p&gt;
+&lt;h3 id=&#34;urheberrecht&#34;&gt;&lt;strong&gt;Urheberrecht&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen
+Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der
+Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.
+Soweit die Inhalte auf dieser Seite nicht vom Betreiber erstellt wurden, werden die Urheberrechte Dritter
+beachtet. Insbesondere werden Inhalte Dritter als solche gekennzeichnet. Sollten Sie trotzdem auf eine
+Urheberrechtsverletzung aufmerksam werden, bitten wir um einen entsprechenden Hinweis. Bei
+Bekanntwerden von Rechtsverletzungen werden wir derartige Inhalte umgehend entfernen.&lt;/p&gt;
+&lt;p&gt;Quelle:
+
+&lt;a href=&#34;https://www.e-recht24.de/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;eRecht24&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Publication</title>
+      <link>/publication/</link>
+      <pubDate>Sun, 05 Apr 2020 15:51:57 +0200</pubDate>
+      <guid>/publication/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Slides</title>
+      <link>/slides/example/</link>
+      <pubDate>Tue, 05 Feb 2019 00:00:00 +0000</pubDate>
+      <guid>/slides/example/</guid>
+      <description>&lt;h1 id=&#34;create-slides-in-markdown-with-academic&#34;&gt;Create slides in Markdown with Academic&lt;/h1&gt;
+&lt;p&gt;
+&lt;a href=&#34;https://sourcethemes.com/academic/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Academic&lt;/a&gt; | 
+&lt;a href=&#34;https://sourcethemes.com/academic/docs/managing-content/#create-slides&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Documentation&lt;/a&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;features&#34;&gt;Features&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Efficiently write slides in Markdown&lt;/li&gt;
+&lt;li&gt;3-in-1: Create, Present, and Publish your slides&lt;/li&gt;
+&lt;li&gt;Supports speaker notes&lt;/li&gt;
+&lt;li&gt;Mobile friendly slides&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;controls&#34;&gt;Controls&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Next: &lt;code&gt;Right Arrow&lt;/code&gt; or &lt;code&gt;Space&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Previous: &lt;code&gt;Left Arrow&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Start: &lt;code&gt;Home&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Finish: &lt;code&gt;End&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Overview: &lt;code&gt;Esc&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Speaker notes: &lt;code&gt;S&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Fullscreen: &lt;code&gt;F&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Zoom: &lt;code&gt;Alt + Click&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;a href=&#34;https://github.com/hakimel/reveal.js#pdf-export&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;PDF Export&lt;/a&gt;: &lt;code&gt;E&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;code-highlighting&#34;&gt;Code Highlighting&lt;/h2&gt;
+&lt;p&gt;Inline code: &lt;code&gt;variable&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Code block:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;porridge = &amp;quot;blueberry&amp;quot;
+if porridge == &amp;quot;blueberry&amp;quot;:
+    print(&amp;quot;Eating...&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;math&#34;&gt;Math&lt;/h2&gt;
+&lt;p&gt;In-line math: $x + y = z$&lt;/p&gt;
+&lt;p&gt;Block math:&lt;/p&gt;
+&lt;p&gt;$$
+f\left( x \right) = ;\frac{{2\left( {x + 4} \right)\left( {x - 4} \right)}}{{\left( {x + 4} \right)\left( {x + 1} \right)}}
+$$&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;fragments&#34;&gt;Fragments&lt;/h2&gt;
+&lt;p&gt;Make content appear incrementally&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;{{% fragment %}} One {{% /fragment %}}
+{{% fragment %}} **Two** {{% /fragment %}}
+{{% fragment %}} Three {{% /fragment %}}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Press &lt;code&gt;Space&lt;/code&gt; to play!&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;fragment &#34; &gt;
+One
+&lt;/span&gt;
+&lt;span class=&#34;fragment &#34; &gt;
+&lt;strong&gt;Two&lt;/strong&gt;
+&lt;/span&gt;
+&lt;span class=&#34;fragment &#34; &gt;
+Three
+&lt;/span&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;A fragment can accept two optional parameters:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;class&lt;/code&gt;: use a custom style (requires definition in custom CSS)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;weight&lt;/code&gt;: sets the order in which a fragment appears&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;speaker-notes&#34;&gt;Speaker Notes&lt;/h2&gt;
+&lt;p&gt;Add speaker notes to your presentation&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;{{% speaker_note %}}
+- Only the speaker can read these notes
+- Press `S` key to view
+{{% /speaker_note %}}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Press the &lt;code&gt;S&lt;/code&gt; key to view the speaker notes!&lt;/p&gt;
+&lt;aside class=&#34;notes&#34;&gt;
+  &lt;ul&gt;
+&lt;li&gt;Only the speaker can read these notes&lt;/li&gt;
+&lt;li&gt;Press &lt;code&gt;S&lt;/code&gt; key to view&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/aside&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;themes&#34;&gt;Themes&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;black: Black background, white text, blue links (default)&lt;/li&gt;
+&lt;li&gt;white: White background, black text, blue links&lt;/li&gt;
+&lt;li&gt;league: Gray background, white text, blue links&lt;/li&gt;
+&lt;li&gt;beige: Beige background, dark text, brown links&lt;/li&gt;
+&lt;li&gt;sky: Blue background, thin dark text, blue links&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;ul&gt;
+&lt;li&gt;night: Black background, thick white text, orange links&lt;/li&gt;
+&lt;li&gt;serif: Cappuccino background, gray text, brown links&lt;/li&gt;
+&lt;li&gt;simple: White background, black text, blue links&lt;/li&gt;
+&lt;li&gt;solarized: Cream-colored background, dark green text, blue links&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+
+&lt;section data-noprocess data-shortcode-slide
+  
+      
+      data-background-image=&#34;/img/boards.jpg&#34;
+  &gt;
+
+&lt;h2 id=&#34;custom-slide&#34;&gt;Custom Slide&lt;/h2&gt;
+&lt;p&gt;Customize the slide style and background&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;{{&amp;lt; slide background-image=&amp;quot;/img/boards.jpg&amp;quot; &amp;gt;}}
+{{&amp;lt; slide background-color=&amp;quot;#0000FF&amp;quot; &amp;gt;}}
+{{&amp;lt; slide class=&amp;quot;my-style&amp;quot; &amp;gt;}}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;custom-css-example&#34;&gt;Custom CSS Example&lt;/h2&gt;
+&lt;p&gt;Let&amp;rsquo;s make headers navy colored.&lt;/p&gt;
+&lt;p&gt;Create &lt;code&gt;assets/css/reveal_custom.css&lt;/code&gt; with:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-css&#34;&gt;.reveal section h1,
+.reveal section h2,
+.reveal section h3 {
+  color: navy;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;hr&gt;
+&lt;h1 id=&#34;questions&#34;&gt;Questions?&lt;/h1&gt;
+&lt;p&gt;
+&lt;a href=&#34;https://spectrum.chat/academic&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Ask&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;a href=&#34;https://sourcethemes.com/academic/docs/managing-content/#create-slides&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Documentation&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Rhyolite-MELTS vs DERP – Reply to Comment by Gualda et al. on ‘The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry’ by Wilke et al. (2017), Journal of Petrology, 58, No. 4, 789–818</title>
+      <link>/publication/derp2/</link>
+      <pubDate>Fri, 01 Feb 2019 00:00:00 +0000</pubDate>
+      <guid>/publication/derp2/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry</title>
+      <link>/publication/derp1/</link>
+      <pubDate>Mon, 24 Jul 2017 00:00:00 +0000</pubDate>
+      <guid>/publication/derp1/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>The system quartz-albite-orthoclase-anorthite-H2O as a geobarometer: experimental calibration and application to rhyolites of the Snake River Plain, Yellowstone, USA</title>
+      <link>/publication/promotion/</link>
+      <pubDate>Fri, 24 Jun 2016 00:00:00 +0000</pubDate>
+      <guid>/publication/promotion/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>External Project</title>
+      <link>/project/external-project/</link>
+      <pubDate>Wed, 27 Apr 2016 00:00:00 +0000</pubDate>
+      <guid>/project/external-project/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Internal Project</title>
+      <link>/project/internal-project/</link>
+      <pubDate>Wed, 27 Apr 2016 00:00:00 +0000</pubDate>
+      <guid>/project/internal-project/</guid>
+      <description>&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
+&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
+&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
+&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
+&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>A Practical Method for Accurate Measurement of Trace Level Fluorine in Mg‐ and Fe‐Bearing Minerals and Glasses Using Electron Probe Microanalysis</title>
+      <link>/publication/microprobe/</link>
+      <pubDate>Wed, 23 Dec 2015 00:00:00 +0000</pubDate>
+      <guid>/publication/microprobe/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Experimental investigation of the effect of Ca, Fe and Ti on cotectic compositions of the rhyolitic system</title>
+      <link>/publication/carodata/</link>
+      <pubDate>Sun, 01 Mar 2015 00:00:00 +0000</pubDate>
+      <guid>/publication/carodata/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

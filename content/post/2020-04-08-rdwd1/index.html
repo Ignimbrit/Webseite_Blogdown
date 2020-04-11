@@ -1,0 +1,204 @@
+---
+title: Working with climate data from the German Meteorological Service (DWD)
+author: Sören Wilke
+date: '2020-04-08'
+slug: Working-with-rdwd
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2020-04-08T11:12:26+02:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: yes
+projects: []
+---
+
+
+
+<p>Many tasks in the realm of Hydrogeology require data from meteorological observations to be taken into account. If you are working on such a project that happens to be located in Germany, you can count yourself lucky, because the <a href="www.dwd.de">Deutscher Wetterdienst</a> (DWD, German Meteorological Service) is providing a cornucopia of both brand new and historic data for free via its <a href="https://opendata.dwd.de/climate_environment/CDC/">climate datacenter</a> (CDC). The interface to that server, however, can be somewhat confusing at first, due to the mass of very different data formats and the poignant absence of any meaningful GUI. In this post we will therefore explore how we can use <a href="www.r-project.org">R</a> and specifically the <a href="https://cran.r-project.org/web/packages/rdwd/index.html">rdwd</a> library to access data from the CDC and turn it into a (hopefully) meaningful visualization.</p>
+<p>For demonstration purposes, let’s look at how the number of days with snowcover changed in Germany over the years, a task I came up with this winter, while looking out of the window and, well, missing snow. As mentioned, we will use R-package rdwd, which <a href="https://bookdown.org/brry/rdwd/">ships with an excellent documentation</a> that we can use to look up how to find the data we are interested in, download it and load it into R.</p>
+<p>By and at large, DWD-datasets can be divided into two categories:</p>
+<ol style="list-style-type: decimal">
+<li>Data associated with a discrete weather station</li>
+<li>Gridded data spanning a larger area (usually all of Germany)</li>
+</ol>
+<p>As we are interested in snow cover data for all of Germany, we will look into the gridded data.</p>
+<pre class="r"><code># first let&#39;s get our R-session set up properly
+library(tidyverse) # this is for data-wrangling and -visualisation 
+library(rdwd) # this is where we get our data from
+library(raster) # this will help us work with raster data
+library(sp) # this is used here to convert between spatial data formats
+library(paletteer) # pretty color palettes for plots
+library(magick) # his will be used to render the final animation
+
+# The next step is to locate the data we are interested in on the CDC-Server
+
+# Load the adresses of all available files 
+data(gridIndex)
+# only keep the adresses of data we are interested in
+links &lt;- gridIndex[str_detect(gridIndex, &quot;^annual/snowcover_days/grids&quot;)]
+head(links, n = 3) #inspect what we&#39;ve got</code></pre>
+<pre><code>## [1] &quot;annual/snowcover_days/grids_germany_annual_snowcover_days_1951_17.asc.gz&quot;
+## [2] &quot;annual/snowcover_days/grids_germany_annual_snowcover_days_1952_17.asc.gz&quot;
+## [3] &quot;annual/snowcover_days/grids_germany_annual_snowcover_days_1953_17.asc.gz&quot;</code></pre>
+<pre class="r"><code>tail(links, n = 3)</code></pre>
+<pre><code>## [1] &quot;annual/snowcover_days/grids_germany_annual_snowcover_days_2016_17.asc.gz&quot;
+## [2] &quot;annual/snowcover_days/grids_germany_annual_snowcover_days_2017_17.asc.gz&quot;
+## [3] &quot;annual/snowcover_days/grids_germany_annual_snowcover_days_2018_17.asc.gz&quot;</code></pre>
+<p>So we managed to locate the position of 68 files of gridded snow-cover data. Each file contains the data for a single year and we have files spanning the period from 1951 to 2018. Now that we know where we can find the data, the next steps are:</p>
+<ul>
+<li>Downloading the data to your hard disc</li>
+<li>Actually loading the data into R</li>
+<li>Shaping the data into a format to work on with</li>
+</ul>
+<p>This is achieved mainly by two functions provided by <code>rdwd</code>. We will download the data with <code>dataDWD</code> and load it with <code>readDWD</code>. Please note that the downloaded files are stored on your hard drive and take up approximately 200 MB of space. As we need to download all 68 files, we will iterate over every element of <code>links</code>, applying the function-in-question on the way.</p>
+<pre class="r"><code>map(
+  links, 
+  dataDWD, 
+  base = gridbase, 
+  joinbf = TRUE, 
+  read = FALSE
+  )
+
+# Executed like this, the downloaded files will be stored in a subdirectory
+# named &quot;DWDdata/&quot;. Let&#39;s see what we&#39;ve got!
+
+lokallinks &lt;- list.files(&quot;DWDdata/&quot;)
+
+# In the next step we will do something a bit more complex.
+# The goal is to load the downloaded files into R and give them a structure
+# that is convenient to work with. As we want this to happen with all 68
+# files, we will define a function that loads a file and returns the data 
+# in the desired way and then apply said function to every file.
+
+grabmydata &lt;- function(file){
+  
+  # first let&#39;s load the data and store it in a nice data.frame
+  df &lt;- readDWD(paste0(&quot;DWDdata/&quot;, file)) %&gt;% 
+    as(&quot;SpatialPixelsDataFrame&quot;) %&gt;% 
+    as.data.frame()
+  
+  # give it some nice coloumn names
+  colnames(df) &lt;- c(&quot;value&quot;, &quot;x&quot;, &quot;y&quot;)
+  
+  # next we want to know the year that the data corresponds to
+  year &lt;- file %&gt;% 
+    str_remove(&quot;annual_snowcover_days_grids_germany_annual_snowcover_days_&quot;) %&gt;% 
+    str_remove(&quot;_17.asc.gz&quot;) %&gt;% 
+    as.integer()
+  
+  # Now just store the year as another variable in the data.frame
+  df %&gt;% mutate(year = year)
+}
+
+# Now that we have a function that knows how to handle a file, iterate over
+# all files and append the result rowwise.
+df &lt;- map_dfr(lokallinks, grabmydata)</code></pre>
+<p>Now that we have all the data nicely loaded into our global environment, we can start visualizing them. In a first step, let’s look at the situation in the year 2008. We can later expand this to include all years.</p>
+<p>There is one little catch, though. To make the figure more visually appealing, we will apply a logarithmic color gradient, while keeping the actual scale linear.</p>
+<pre class="r"><code>df_08 &lt;- df %&gt;% 
+  filter(year == 2008)
+
+# In the plot legend we want to see what the color looks like for the following 
+# numbers of days of snow cover:
+
+snow_days_legend &lt;- c(0.1, 0.3, 1, 3, 10, 30)
+
+ggplot(
+  data = df_08,
+  aes(
+    x = x,
+    y = y,
+    fill = log10(value)
+  )
+) +
+  geom_tile() +
+    annotate(
+      geom = &quot;label&quot;, x = max(df$x) - 140000, y = min(df$y) - 10000,
+      label = &quot;source: Deutscher Wetterdienst&quot;,
+      size = 2
+    ) +
+  labs(
+    title = &quot;Total days of snow in 2008&quot;,
+    fill = &quot;days with\nsnow-cover&quot;
+  ) +
+  scale_fill_paletteer_c(
+    &quot;ggthemes::Classic Orange-Blue&quot;,
+    limits = log10(c(0.1, 60)),
+    breaks = log10(snow_days_legend),
+    labels = snow_days_legend
+  ) +
+  theme_bw() +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+  )</code></pre>
+<p><img src="Schnee_2008.png" width="400px" /></p>
+<p>Now this is nice, but it only shows us the situation for a single year, which tells us nothing about how the snow-cover-situation changed over time. Question is: how do we include the plots for the other years? One might be tempted to work with facets here, but faceting 68 plots will result in a visual overload. The better solution is to build a little gif.</p>
+<pre class="r"><code>df_list &lt;- df %&gt;% 
+  group_split(year)
+
+# Make a time-series vector for iteration
+ts &lt;- map_dbl(df_list, function(x) {first(x$year)})
+
+# here we iterate along the years, plotting each annual dataset and subsequently
+# saving the resulting image to the hard disc. This might take a while. The
+# produced data has a size of ~7Mb
+
+# ATTENTION: note that I am saving the plots in a subdirectory called &quot;facets&quot;.
+# ggsave will not create that subdir automatically, so you may have to set it up
+# manually. I decided not to create it in this code chunk as that would equal
+# messing up other peoples folder-system, which I was told is bad style.
+
+for (i in seq_along(ts)){
+  gif_facet &lt;- ggplot(
+    data = df_list[[i]],
+    aes(
+      x = x,
+      y = y,
+      fill = log10(value)
+    )
+  ) +
+    geom_tile() +
+    annotate(
+      geom = &quot;label&quot;, x = max(df$x) - 140000, y = min(df$y) - 10000,
+      label = &quot;source: Deutscher Wetterdienst&quot;,
+      size = 2
+    ) +
+    labs(
+      title = paste0(&quot;Total days of snow in &quot;, ts[i]),
+      fill = &quot;days with\nsnow-cover&quot;
+    ) +
+    scale_fill_paletteer_c(
+      &quot;ggthemes::Classic Orange-Blue&quot;,
+      limits = log10(c(0.1, 60)),
+      breaks = log10(snow_days_legend),
+      labels = snow_days_legend
+    ) +
+    theme_bw() +
+    theme(
+      axis.title = element_blank(),
+      axis.text = element_blank(),
+    )
+  
+  ggsave(
+    filename = paste0(&quot;facets/snow_&quot;, ts[i],&quot;.png&quot;), # make sure this works on your machine!
+    plot = gif_facet,
+    width = 10, height = 12, units = &quot;cm&quot;, dpi = 150
+  )
+}
+
+# get the path of the created images
+plotlist &lt;- list.files(&quot;facets/&quot;, pattern = &quot;.png$&quot;)
+
+# construct the actual gif
+image_write_gif(
+  image_read(paste0(&quot;facets/&quot;, plotlist)),
+  path = &quot;Snowdays_in_Ger.gif&quot;,
+  delay = 0.5
+)</code></pre>
+<p><img src="featured.gif" width="400px" /></p>

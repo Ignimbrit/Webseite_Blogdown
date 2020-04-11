@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Dr. rer nat. Sören Wilke</title>
+    <link>/authors/admin/</link>
+      <atom:link href="/authors/admin/index.xml" rel="self" type="application/rss+xml" />
+    <description>Dr. rer nat. Sören Wilke</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2020</copyright><lastBuildDate>Fri, 01 Feb 2019 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>img/map[gravatar:%!s(bool=false) shape:circle]</url>
+      <title>Dr. rer nat. Sören Wilke</title>
+      <link>/authors/admin/</link>
+    </image>
+    
+    <item>
+      <title>Rhyolite-MELTS vs DERP – Reply to Comment by Gualda et al. on ‘The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry’ by Wilke et al. (2017), Journal of Petrology, 58, No. 4, 789–818</title>
+      <link>/publication/derp2/</link>
+      <pubDate>Fri, 01 Feb 2019 00:00:00 +0000</pubDate>
+      <guid>/publication/derp2/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry</title>
+      <link>/publication/derp1/</link>
+      <pubDate>Mon, 24 Jul 2017 00:00:00 +0000</pubDate>
+      <guid>/publication/derp1/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>The system quartz-albite-orthoclase-anorthite-H2O as a geobarometer: experimental calibration and application to rhyolites of the Snake River Plain, Yellowstone, USA</title>
+      <link>/publication/promotion/</link>
+      <pubDate>Fri, 24 Jun 2016 00:00:00 +0000</pubDate>
+      <guid>/publication/promotion/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>A Practical Method for Accurate Measurement of Trace Level Fluorine in Mg‐ and Fe‐Bearing Minerals and Glasses Using Electron Probe Microanalysis</title>
+      <link>/publication/microprobe/</link>
+      <pubDate>Wed, 23 Dec 2015 00:00:00 +0000</pubDate>
+      <guid>/publication/microprobe/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Experimental investigation of the effect of Ca, Fe and Ti on cotectic compositions of the rhyolitic system</title>
+      <link>/publication/carodata/</link>
+      <pubDate>Sun, 01 Mar 2015 00:00:00 +0000</pubDate>
+      <guid>/publication/carodata/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

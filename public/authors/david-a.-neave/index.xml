@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>David A. Neave | Dr. rer nat. Sören Wilke</title>
+    <link>/authors/david-a.-neave/</link>
+      <atom:link href="/authors/david-a.-neave/index.xml" rel="self" type="application/rss+xml" />
+    <description>David A. Neave</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2020</copyright><lastBuildDate>Fri, 01 Feb 2019 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>img/map[gravatar:%!s(bool=false) shape:circle]</url>
+      <title>David A. Neave</title>
+      <link>/authors/david-a.-neave/</link>
+    </image>
+    
+    <item>
+      <title>Rhyolite-MELTS vs DERP – Reply to Comment by Gualda et al. on ‘The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry’ by Wilke et al. (2017), Journal of Petrology, 58, No. 4, 789–818</title>
+      <link>/publication/derp2/</link>
+      <pubDate>Fri, 01 Feb 2019 00:00:00 +0000</pubDate>
+      <guid>/publication/derp2/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>The Effect of Anorthite Content and Water on Quartz–Feldspar Cotectic Compositions in the Rhyolitic System and Implications for Geobarometry</title>
+      <link>/publication/derp1/</link>
+      <pubDate>Mon, 24 Jul 2017 00:00:00 +0000</pubDate>
+      <guid>/publication/derp1/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
