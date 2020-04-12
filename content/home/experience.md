@@ -20,7 +20,7 @@ date_format = "Jan 2006"
 [[experience]]
   title = "Project Engineer"
   company = "AKVO Jungk Consult GmbH"
-  company_url = "akvo.de"
+  company_url = "https://www.akvo.de"
   location = "Berlin"
   date_start = "2017-09-01"
   date_end = ""
