@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Dr. rer nat. Sören Wilke</title>
+    <title>Dr. rer. nat. Sören Wilke</title>
     <link>/</link>
       <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
-    <description>Dr. rer nat. Sören Wilke</description>
+    <description>Dr. rer. nat. Sören Wilke</description>
     <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2020</copyright><lastBuildDate>Sun, 05 Apr 2020 18:28:03 +0200</lastBuildDate>
     <image>
       <url>img/map[gravatar:%!s(bool=false) shape:circle]</url>
-      <title>Dr. rer nat. Sören Wilke</title>
+      <title>Dr. rer. nat. Sören Wilke</title>
       <link>/</link>
     </image>
     
@@ -73,6 +73,18 @@
 &lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;shortcodes&lt;/a&gt;.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Further talk details can easily be added to this page using &lt;em&gt;Markdown&lt;/em&gt; and $\rm \LaTeX$ math code.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Plotting Well Logs with R</title>
+      <link>/post/geologging/</link>
+      <pubDate>Mon, 13 Apr 2020 00:00:00 +0000</pubDate>
+      <guid>/post/geologging/</guid>
+      <description>
+
+
+&lt;p&gt;test&lt;/p&gt;
 </description>
     </item>
     
@@ -347,7 +359,7 @@ image_write_gif(
       <pubDate>Sun, 05 Apr 2020 18:28:03 +0200</pubDate>
       <guid>/impressum/</guid>
       <description>&lt;h2 id=&#34;angaben-gemäß--5-tmg&#34;&gt;&lt;strong&gt;Angaben gemäß § 5 TMG&lt;/strong&gt;&lt;/h2&gt;
-&lt;p&gt;Sören Wilke&lt;br&gt;
+&lt;p&gt;Dr. rer. nat. Sören Wilke&lt;br&gt;
 Achillesstraße 94&lt;br&gt;
 13125 Berlin&lt;/p&gt;
 &lt;h2 id=&#34;kontakt&#34;&gt;&lt;strong&gt;Kontakt&lt;/strong&gt;&lt;/h2&gt;

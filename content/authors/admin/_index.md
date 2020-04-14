@@ -4,7 +4,7 @@ authors:
 bio: My research interests include hydrogeochemistry, geologic modelling and geostatistics.
 education:
   courses:
-  - course: Dr. rer nat in Mineralogy
+  - course: Dr. rer. nat. in Mineralogy
     institution: Leibniz Universität Hannover
     year: 2016
   - course: MSc in Geosciences
@@ -22,7 +22,7 @@ name: Sören Wilke
 organizations:
 - name: AKVO Jungk Consult GmbH
   url: ""
-role: Dr. rer nat Earth Science
+role: Dr. rer. nat. Earth Science
 social:
 - icon: envelope
   icon_pack: fas
@@ -33,6 +33,9 @@ social:
 - icon: github
   icon_pack: fab
   link: https://github.com/ignimbrit
+- icon: xing-square
+  icon_pack: fab
+  link: https://www.xing.com/profile/Soeren_Wilke2/cv
 superuser: true
 user_groups:
 - Researchers

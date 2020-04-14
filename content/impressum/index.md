@@ -31,7 +31,7 @@ projects: []
 
 ## **Angaben gemäß § 5 TMG**
 
-Sören Wilke  
+Dr. rer. nat. Sören Wilke  
 Achillesstraße 94  
 13125 Berlin  
 
