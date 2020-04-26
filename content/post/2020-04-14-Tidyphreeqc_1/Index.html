@@ -1,0 +1,29 @@
+---
+title: Geochemical Modelling of 1D-Transport with Non-Steady Contaminant Input (Tidyphreeqc
+  Part 1)
+author: ~
+date: '2020-04-14'
+slug: Tidyphreeqc_Part_1
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2020-04-14T12:14:02+02:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+draft: true
+---
+
+
+
+<p><a href="https://www.usgs.gov/software/phreeqc-version-3">PHREEQC</a> is a powefull program for hydrogeochemical modelling developed by the <a href="https://en.wikipedia.org/wiki/United_States_Geological_Survey">USGS</a>. I like to think of it as a construction kit for (series of) virtual beakers, where all sorts of reactants can be mixed together.</p>
+<p>So while PHREEQC in itself is a tremendous framework, practical work with that program is often limited by a lack of native features that allow for iterativ or repetitive modelling routines. A PHREEQC-program is a set of command strings, but there is no comfortable way e.g. to set up a for-loop to map out a matrix of variables.</p>
+<p>As far as I am aware, several attempts have been made to overcome this issue and to complement PHREEQC with programmable functionality. PHREEQC itself has an inbuild interpreter for <a href="https://en.wikipedia.org/wiki/BASIC">BASIC</a> and the program <a href="http://www.phreeplot.org/">PHREEPLOT</a> implements routines to generate complex figures from repetitive calls to PHREEQC. Personally, I found those interfaces unsuitable for my daily workflow, but your experience may vary.</p>
+<p>My favourite way of interacting with PHREEQC as of today is the <a href="https://www.r-project.org/">R</a>-Package <a href="https://github.com/paleolimbot/tidyphreeqc/blob/master/README.md">Tidyphreeqc</a> by <a href="https://fishandwhistle.net/cv/">Dewey Dunnington, phd</a>. It provides various functions to make the construction of PHREEQC-input files comfortable and automatable. You can push your input directly into PHREEQC and retrieve the output without ever having to leave your cozy R-Studio panes. Due to this close integration, it becomes easy to harvest R’s capabilities as a programming language and its excuisite visualization tools.</p>
+<p>The most obvious (and probably most important) use case for coupling PHREEQC with a fully programmable interface is to generate thousands of models to map out the effect of parameter combinations on a discrete chemical system. For Tidyphreeqc this has been demonstrated in <a href="https://fishandwhistle.net/post/2018/pourbaix-ish-diagrams-using-phreeqc-and-r/">this Blogpost</a> by the packages’ creator by generating the <a href="https://en.wikipedia.org/wiki/Pourbaix_diagram">Pourbaix-Diagram</a> for Manganese.</p>
+<p>In todays post we will explore another advantage of the Tidyphreeqc-Package: establishing non-steady solution input into a 1D-Transport coloumn.</p>

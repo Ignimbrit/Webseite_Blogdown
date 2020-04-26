@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.8.0">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="Sören Wilke">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="Hallo was geht
+library(raster)library(sf)library(tidyverse)library(ggspatial)library(paletteer)library(viridis)df_exp &lt;- readr::read_csv(&quot;https://raw.githubusercontent.com/Ignimbrit/exchange/master/data/2020/OL_EXP_PHASES.csv&quot;)phases_exp &lt;- df_exp %&gt;% select(-P_MPa, -T_C) %&gt;% colnames() Click here
+# define and assign phase combination groupsphase_group &lt;- function(x, .">
+
+  
+  <link rel="alternate" hreflang="en-us" href="/post/mineral_phase_stability_diagrams/">
+
+  
+
+
+  
+  
+  
+  <meta name="theme-color" content="#795548">
+  
+
+  
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-1/css/all.min.css" integrity="sha256-4w9DunooKSr3MFXHXWyFER38WmPdm361bQS/2KUWZbU=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin="anonymous" title="hl-light">
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark" disabled>
+        
+      
+    
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" integrity="sha256-SHMGCYmST46SoyGgo4YR/9AlK1vf3ff84Aq9yK4hdqM=" crossorigin="anonymous">
+    
+
+    
+
+    
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.1.2/lazysizes.min.js" integrity="sha256-Md1qLToewPeKjfAHU1zyPwOutccPAm5tahnaw7Osw0A=" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+        
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,700%7CRoboto:400,400italic,700%7CRoboto+Mono&display=swap">
+  
+
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.css">
+
+  
+
+
+
+
+  
+
+
+  
+
+  <link rel="manifest" href="/index.webmanifest">
+  <link rel="icon" type="image/png" href="/images/icon_hu77b1023befc97d4c3f8484db1ec7f5fe_13362_32x32_fill_lanczos_center_2.png">
+  <link rel="apple-touch-icon" type="image/png" href="/images/icon_hu77b1023befc97d4c3f8484db1ec7f5fe_13362_192x192_fill_lanczos_center_2.png">
+
+  <link rel="canonical" href="/post/mineral_phase_stability_diagrams/">
+
+  
+  
+  
+  
+  
+    
+    
+  
+  
+  <meta property="twitter:card" content="summary">
+  
+  <meta property="twitter:site" content="@SorenWilke">
+  <meta property="twitter:creator" content="@SorenWilke">
+  
+  <meta property="og:site_name" content="Dr. rer. nat. Sören Wilke">
+  <meta property="og:url" content="/post/mineral_phase_stability_diagrams/">
+  <meta property="og:title" content="Mineral-Phase-Stability-Diagrams in R | Dr. rer. nat. Sören Wilke">
+  <meta property="og:description" content="Hallo was geht
+library(raster)library(sf)library(tidyverse)library(ggspatial)library(paletteer)library(viridis)df_exp &lt;- readr::read_csv(&quot;https://raw.githubusercontent.com/Ignimbrit/exchange/master/data/2020/OL_EXP_PHASES.csv&quot;)phases_exp &lt;- df_exp %&gt;% select(-P_MPa, -T_C) %&gt;% colnames() Click here
+# define and assign phase combination groupsphase_group &lt;- function(x, ."><meta property="og:image" content="img/map[gravatar:%!s(bool=false) shape:circle]">
+  <meta property="twitter:image" content="img/map[gravatar:%!s(bool=false) shape:circle]"><meta property="og:locale" content="en-us">
+  
+    
+      <meta property="article:published_time" content="2020-04-14T00:00:00&#43;00:00">
+    
+    <meta property="article:modified_time" content="2020-04-14T16:39:38&#43;02:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+  
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "/post/mineral_phase_stability_diagrams/"
+  },
+  "headline": "Mineral-Phase-Stability-Diagrams in R",
+  
+  "datePublished": "2020-04-14T00:00:00Z",
+  "dateModified": "2020-04-14T16:39:38+02:00",
+  
+  "author": {
+    "@type": "Person",
+    "name": "Sören Wilke"
+  },
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dr. rer. nat. Sören Wilke",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "/images/icon_hu77b1023befc97d4c3f8484db1ec7f5fe_13362_192x192_fill_lanczos_center_2.png"
+    }
+  },
+  "description": "Hallo was geht\nlibrary(raster)\rlibrary(sf)\rlibrary(tidyverse)\rlibrary(ggspatial)\rlibrary(paletteer)\rlibrary(viridis)\rdf_exp \u0026lt;- readr::read_csv(\u0026quot;https://raw.githubusercontent.com/Ignimbrit/exchange/master/data/2020/OL_EXP_PHASES.csv\u0026quot;)\rphases_exp \u0026lt;- df_exp %\u0026gt;% select(-P_MPa, -T_C) %\u0026gt;% colnames() \r\rClick here\n# define and assign phase combination groups\rphase_group \u0026lt;- function(x, ."
+}
+</script>
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+
+  <title>Mineral-Phase-Stability-Diagrams in R | Dr. rer. nat. Sören Wilke</title>
+
+</head>
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" >
+
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+  
+
+
+
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+  <div class="container">
+
+    
+    <div class="d-none d-lg-inline-flex">
+      <a class="navbar-brand" href="/">Dr. rer. nat. Sören Wilke</a>
+    </div>
+    
+
+    
+    <button type="button" class="navbar-toggler" data-toggle="collapse"
+            data-target="#navbar-content" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+    <span><i class="fas fa-bars"></i></span>
+    </button>
+    
+
+    
+    <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+      <a class="navbar-brand" href="/">Dr. rer. nat. Sören Wilke</a>
+    </div>
+    
+
+    
+    
+    <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+      
+      <ul class="navbar-nav d-md-inline-flex">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#experience"><span>Experience</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts"><span>Posts</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#featured"><span>Publications</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#contact"><span>Contact</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/impressum"><span>Impressum</span></a>
+        </li>
+
+        
+        
+
+      
+
+        
+      </ul>
+    </div>
+
+    <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+      
+      <li class="nav-item">
+        <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+      </li>
+      
+
+      
+      <li class="nav-item dropdown theme-dropdown">
+        <a href="#" class="nav-link js-theme-selector" data-toggle="dropdown" aria-haspopup="true">
+          <i class="fas fa-palette" aria-hidden="true"></i>
+        </a>
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item js-set-theme-light">
+            <span>Light</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-dark">
+            <span>Dark</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-auto">
+            <span>Automatic</span>
+          </a>
+        </div>
+      </li>
+      
+
+      
+
+    </ul>
+
+  </div>
+</nav>
+
+
+  <article class="article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+  
+  
+<div class="article-container pt-3">
+  <h1>Mineral-Phase-Stability-Diagrams in R</h1>
+
+  
+
+  
+    
+
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+          Last updated on
+      
+    
+    Apr 14, 2020
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    6 min read
+  </span>
+  
+
+  
+  
+  
+
+  
+  
+
+</div>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style">
+      
+
+
+<p>Hallo was geht</p>
+<pre class="r"><code>library(raster)
+library(sf)
+library(tidyverse)
+library(ggspatial)
+library(paletteer)
+library(viridis)
+
+df_exp &lt;- readr::read_csv(&quot;https://raw.githubusercontent.com/Ignimbrit/exchange/master/data/2020/OL_EXP_PHASES.csv&quot;)
+
+phases_exp &lt;- df_exp %&gt;% select(-P_MPa, -T_C) %&gt;% colnames() </code></pre>
+<details>
+<p><summary>Click here</summary></p>
+<pre class="r"><code># define and assign phase combination groups
+
+
+phase_group &lt;- function(x, ...){
+
+  df &lt;- x %&gt;% dplyr::select(!!!enquos(...))
+  force(df)
+  
+  phase_names &lt;- colnames(df)
+  
+  phase_list_lgl &lt;- purrr::pmap(as.list(df), c)
+  
+  phase_list_chr &lt;- vector(&quot;list&quot;, length = length(phase_list_lgl))
+  for(i in seq_along(phase_list_chr)){
+    phase_list_chr[[i]] &lt;- phase_names[phase_list_lgl[[i]]]
+  }
+  
+  combinations &lt;- purrr::map_chr(
+      phase_list_chr,
+      .f = paste,
+      collapse = &quot; + &quot;
+    ) %&gt;% 
+    factor(
+      levels = sort(unique(.))
+    )
+  
+  
+  x %&gt;% mutate(
+    phase_combo = combinations
+  ) %&gt;% 
+    mutate(
+      group_no = as.integer(phase_combo)
+    )
+}
+
+polygonize_phasegroup &lt;- function(x, y, z){
+  raster::rasterFromXYZ(
+    data.frame(
+      x = x,
+      y = y,
+      z = z
+    )
+  ) %&gt;% 
+    raster::rasterToPolygons(dissolve = TRUE) %&gt;% 
+    sf::st_as_sf() %&gt;% 
+    ggspatial::df_spatial()
+}
+
+find_phase_border &lt;- function(
+  phase_exists, x, y, 
+  segment_length = NULL, cut = FALSE, raster_res = c(NA, NA)
+){
+  rawdat &lt;- tibble::tibble(x, y, phase_exists)
+  df &lt;- rawdat %&gt;% 
+    dplyr::filter(phase_exists)
+  
+  
+  coord_sf &lt;- raster::rasterFromXYZ(
+    data.frame(
+      x = df[[1]],
+      y = df[[2]],
+      z = as.integer(df[[3]])
+    ),
+    res = raster_res
+  ) %&gt;% 
+    raster::rasterToPolygons(dissolve = TRUE) %&gt;%
+    sf::st_as_sf() %&gt;% 
+    sf::st_buffer(dist = 0) %&gt;% 
+    sf::st_cast(&quot;LINESTRING&quot;)
+  
+  
+  
+  if(!is.null(segment_length)){
+    coord_sf &lt;- sf::st_line_sample(coord_sf, density = segment_length)
+  }
+  
+  coord_set &lt;- coord_sf  %&gt;%
+    sf::st_coordinates() %&gt;%
+    as.data.frame() %&gt;%
+    .[, 1:2]
+  
+  names(coord_set) &lt;- c(&quot;x&quot;, &quot;y&quot;)
+  
+  if(cut){
+    
+    boundary &lt;- raster::rasterFromXYZ(
+      data.frame(
+        x = rawdat[[1]],
+        y = rawdat[[2]],
+        z = as.integer(rawdat[[3]])
+      )
+    ) %&gt;%
+      raster::rasterToPolygons(dissolve = TRUE) %&gt;%
+      sf::st_as_sf() %&gt;%
+      sf::st_buffer(dist = 0) %&gt;%
+      sf::st_cast(&quot;LINESTRING&quot;) %&gt;%
+      sf::st_coordinates() %&gt;%
+      as.data.frame() %&gt;%
+      .[, 1:2]
+    
+    names(boundary) &lt;- c(&quot;x&quot;, &quot;y&quot;)
+    
+    c_xmin &lt;- min(boundary$x) %&gt;% ceiling() + 1
+    c_xmax &lt;- max(boundary$x) %&gt;% floor() - 1
+    c_ymin &lt;- min(boundary$y) %&gt;% ceiling() + 1
+    c_ymax &lt;- max(boundary$y) %&gt;% floor() - 1
+    
+    coord_set &lt;- coord_set %&gt;%
+      dplyr::filter(x &gt; c_xmin) %&gt;%
+      dplyr::filter(x &lt; c_xmax) %&gt;%
+      dplyr::filter(y &gt; c_ymin) %&gt;%
+      dplyr::filter(y &lt; c_ymax)
+    
+    
+  }
+  
+  coord_set %&gt;%
+    dplyr::arrange(x)
+}</code></pre>
+</details>
+<pre class="r"><code>df_exp_grouped &lt;- phase_group(df_exp, Combeite:Pyroxene)
+
+polygons_exp &lt;- polygonize_phasegroup(
+  x = df_exp_grouped$T_C,
+  y = df_exp_grouped$P_MPa,
+  z = df_exp_grouped$group_no
+) %&gt;% 
+  left_join(
+    select(df_exp_grouped, group_no, phase_combo),
+    by = c(&quot;z&quot; = &quot;group_no&quot;)
+  )
+
+phase_borders_exp &lt;-  purrr::map(
+  dplyr::select(df_exp_grouped, Combeite:Pyroxene),
+  find_phase_border,
+  x = df_exp_grouped$T_C,
+  y = df_exp_grouped$P_MPa,
+  segment_length = 10,
+  cut = TRUE,
+  raster_res = c(50, 100)
+)
+
+ggplot(
+  data = polygons_exp,
+  mapping = aes(
+    x = x, y = y, z = z, fill = feature_id
+  )
+) +
+  geom_polygon()</code></pre>
+<p><img src="/post/2020-04-14-phase-stability-diagrams/index_files/figure-html/phase_polygons-1.png" width="672" /></p>
+<pre class="r"><code>border_df_exp &lt;- purrr::map2_dfr(
+  phase_borders_exp,
+  names(phase_borders_exp),
+  function(.x, .y){dplyr::mutate(.x, Phase = .y)}
+)
+
+labels &lt;- polygons_exp %&gt;% 
+  group_by(phase_combo) %&gt;% 
+  summarize(x = mean(x), y = mean(y))
+
+ggplot() +
+    geom_polygon(
+    data = polygons_exp,
+    mapping = aes(
+      x = x, y = y, fill = feature_id
+    ),
+    alpha = 0.2
+  ) +
+    geom_path(data = border_df_exp, aes(x = x+as.integer(Phase)-3, y = y, linetype = Phase))</code></pre>
+<pre><code>## Warning in FUN(X[[i]], ...): NAs introduced by coercion</code></pre>
+<pre><code>## Warning: Removed 16380 row(s) containing missing values (geom_path).</code></pre>
+<p><img src="/post/2020-04-14-phase-stability-diagrams/index_files/figure-html/minborders-1.png" width="672" /></p>
+<pre class="r"><code>ggplot() +
+    geom_polygon(
+    data = polygons_exp,
+    mapping = aes(
+      x = x, y = y, fill = feature_id
+    ),
+    alpha = 0.3,
+    show.legend = FALSE
+  ) +
+  geom_path(
+    data = border_df_exp, 
+    aes(
+      x = x+(as.integer(factor(Phase))-3), 
+      y = y+(as.integer(factor(Phase))-3), 
+      color = Phase
+      ),
+    size = 1
+    )+
+  geom_label(data = labels, aes(x = x, y = y, label = phase_combo)) +
+  viridis::scale_fill_viridis(discrete = TRUE, option = &quot;B&quot;) +
+  theme_bw()</code></pre>
+<p><img src="/post/2020-04-14-phase-stability-diagrams/index_files/figure-html/minborders-2.png" width="672" /></p>
+<pre class="r"><code>df_MELTS &lt;- read_csv(&quot;https://raw.githubusercontent.com/Ignimbrit/exchange/master/data/2020/MELTS_DAWN.csv&quot;)
+
+df_MELTS_simple &lt;- df_MELTS %&gt;% 
+  dplyr::mutate(
+    T_C = as.integer(round(T_C)),
+    P_MPa = as.integer(P_MPa)
+    )
+
+range_MELTS_T &lt;- seq(
+  min(df_MELTS_simple$T_C), 
+  max(df_MELTS_simple$T_C), 
+  1
+  )
+
+range_MELTS_P &lt;- seq(
+  min(df_MELTS_simple$P_MPa), 
+  max(df_MELTS_simple$P_MPa), 
+  500
+  )
+
+grd_MELTS &lt;- as.data.frame(expand.grid(range_MELTS_T, range_MELTS_P)) %&gt;% 
+  dplyr::rename(T_C = Var1, P_MPa = Var2) %&gt;% 
+  dplyr::arrange(dplyr::desc(P_MPa), dplyr::desc(T_C)) %&gt;% 
+  dplyr::left_join(df_MELTS_simple, by = c(&quot;T_C&quot;, &quot;P_MPa&quot;)) %&gt;% 
+  dplyr::group_split(P_MPa) %&gt;% 
+  purrr::map_dfr(
+    .f = tidyr::fill, spinel:clinopyroxene2,  .direction = &quot;down&quot;
+    ) %&gt;% 
+  dplyr::group_split(T_C) %&gt;% 
+  purrr::map_dfr(
+    .f = tidyr::fill, spinel:clinopyroxene2,  .direction = &quot;down&quot;
+    )</code></pre>
+<pre class="r"><code>df_MELTS_grouped &lt;- phase_group(grd_MELTS, spinel:clinopyroxene2)
+
+polygons_MELTS &lt;- polygonize_phasegroup(
+  x = df_MELTS_grouped$T_C,
+  y = df_MELTS_grouped$P_MPa,
+  z = df_MELTS_grouped$group_no
+)
+
+phase_borders_MELTS &lt;-  purrr::map(
+  dplyr::select(df_MELTS_grouped, spinel:clinopyroxene2),
+  find_phase_border,
+  x = df_MELTS_grouped$T_C,
+  y = df_MELTS_grouped$P_MPa,
+  segment_length = 10,
+  cut = TRUE,
+  raster_res = c(1, 500)
+)</code></pre>
+<pre><code>## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant
+
+## Warning in st_cast.sf(., &quot;LINESTRING&quot;): repeating attributes for all sub-
+## geometries for which they may not be constant</code></pre>
+<pre class="r"><code>border_df_MELTS &lt;- purrr::map2_dfr(
+  phase_borders_MELTS,
+  names(phase_borders_MELTS),
+  function(.x, .y){dplyr::mutate(.x, Phase = .y)}
+)
+
+#ggplot() +
+#    geom_polygon(
+#    data = polygons_MELTS,
+#    mapping = aes(
+#      x = x, y = y, group = feature_id, fill = feature_id
+#    ),
+#    alpha = 0.2
+#  ) +
+#    geom_point(data = border_df_MELTS, aes(x = x, y = y, fill = Phase, color = NULL), alpha = 0.5)
+
+
+# ggplot(
+#   data = polygons_MELTS,
+#   mapping = aes(
+#     x = x, y = y, group = feature_id, fill = feature_id
+#   )
+# ) +
+#   geom_polygon() +
+#   scale_x_continuous(name = &quot;T [°C]&quot;) +
+#   scale_y_continuous(name = &quot;P [MPa]&quot;) +
+#   scale_fill_discrete(name = &quot;unique mineral\ncombination&quot;) +
+#   guides(fill=guide_legend(ncol=2))
+
+#ggsave(&quot;D:/Arbeitsprogramme/rstats/MELTS_phase_diagramR/test_1_2020.png&quot;)</code></pre>
+
+    </div>
+
+    
+
+
+
+
+
+
+
+<div class="share-box" aria-hidden="true">
+  <ul class="share">
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://twitter.com/intent/tweet?url=/post/mineral_phase_stability_diagrams/&amp;text=Mineral-Phase-Stability-Diagrams%20in%20R" target="_blank" rel="noopener" class="share-btn-twitter">
+          <i class="fab fa-twitter"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.facebook.com/sharer.php?u=/post/mineral_phase_stability_diagrams/&amp;t=Mineral-Phase-Stability-Diagrams%20in%20R" target="_blank" rel="noopener" class="share-btn-facebook">
+          <i class="fab fa-facebook"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="mailto:?subject=Mineral-Phase-Stability-Diagrams%20in%20R&amp;body=/post/mineral_phase_stability_diagrams/" target="_blank" rel="noopener" class="share-btn-email">
+          <i class="fas fa-envelope"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.linkedin.com/shareArticle?url=/post/mineral_phase_stability_diagrams/&amp;title=Mineral-Phase-Stability-Diagrams%20in%20R" target="_blank" rel="noopener" class="share-btn-linkedin">
+          <i class="fab fa-linkedin-in"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://web.whatsapp.com/send?text=Mineral-Phase-Stability-Diagrams%20in%20R%20/post/mineral_phase_stability_diagrams/" target="_blank" rel="noopener" class="share-btn-whatsapp">
+          <i class="fab fa-whatsapp"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://service.weibo.com/share/share.php?url=/post/mineral_phase_stability_diagrams/&amp;title=Mineral-Phase-Stability-Diagrams%20in%20R" target="_blank" rel="noopener" class="share-btn-weibo">
+          <i class="fab fa-weibo"></i>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+  
+  
+  
+    
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+      
+      <img class="avatar mr-3 avatar-circle" src="/authors/admin/avatar_hu1f94f36023a4535ea796a397ef5c46d9_676750_270x270_fill_q90_lanczos_center.jpg" alt="Sören Wilke">
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="/">Sören Wilke</a></h5>
+      <h6 class="card-subtitle">Dr. rer. nat. Earth Science</h6>
+      <p class="card-text">My research interests include hydrogeochemistry, geologic modelling and geostatistics.</p>
+      <ul class="network-icon" aria-hidden="true">
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="/#contact" >
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://twitter.com/SorenWilke" target="_blank" rel="noopener">
+        <i class="fab fa-twitter"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://github.com/ignimbrit" target="_blank" rel="noopener">
+        <i class="fab fa-github"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://www.xing.com/profile/Soeren_Wilke2/cv" target="_blank" rel="noopener">
+        <i class="fab fa-xing-square"></i>
+      </a>
+    </li>
+  
+</ul>
+
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  </div>
+</article>
+
+      
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+
+      
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/languages/r.min.js"></script>
+        
+      
+
+    
+
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js" integrity="sha256-EErZamuLefUnbMBQbsEqu1USa+btR2oIlCpBJbyD4/g=" crossorigin="anonymous"></script>
+    
+
+    
+    
+    <script>const code_highlighting = true;</script>
+    
+
+    
+    
+    <script>const isSiteThemeDark = false;</script>
+    
+
+    
+    
+    
+    
+    
+    
+    <script>
+      const search_config = {"indexURI":"/index.json","minLength":1,"threshold":0.3};
+      const i18n = {"no_results":"No results found","placeholder":"Search...","results":"results found"};
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.37431be2d92d7fb0160054761ab79602.js"></script>
+
+    
+
+
+
+
+
+
+  
+  
+  <div class="container">
+    <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    © Sören Wilke 2020 &middot; 
+
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" class="back-to-top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+  </div>
+  
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
