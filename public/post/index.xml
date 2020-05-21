@@ -5,12 +5,68 @@
     <link>/post/</link>
       <atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     <description>Posts</description>
-    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2020</copyright><lastBuildDate>Tue, 21 Apr 2020 00:00:00 +0000</lastBuildDate>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2020</copyright><lastBuildDate>Thu, 21 May 2020 00:00:00 +0000</lastBuildDate>
     <image>
       <url>img/map[gravatar:%!s(bool=false) shape:circle]</url>
       <title>Posts</title>
       <link>/post/</link>
     </image>
+    
+    <item>
+      <title>A practical guide to geospatial interpolation with R</title>
+      <link>/post/spatial_interpolation/</link>
+      <pubDate>Thu, 21 May 2020 00:00:00 +0000</pubDate>
+      <guid>/post/spatial_interpolation/</guid>
+      <description>
+
+
+&lt;p&gt;One of the most exciting things you can to with R is geospatial interpolation. This means that you have some kind of information (e.g. measurements of, say, soil temperature) for a limited number of locations and then you apply a mathematical model that will provide you with an educated guess of what your result might look like, if you would have measured at every possible location. The practical advantage is clear. Sampling is expensive and therefore always limited. This is especially true in the geosciences, where sampling might require hundred thousands of Euros for drilling deep holes to the formation of your interest.&lt;/p&gt;
+&lt;p&gt;Doing your geospatial interpolation in R is a great opportunity. Many software tools often associated with that task are commercial products that can become fairly expensive, so it is pretty common that if one finishes university or changes a job position, all the work used to learn that tool is rendered void. R on the other hand is always free and offers a wide range of algorithms of all kinds of flavours. An additional bonus is the seamless integration with the powerful data transformation and visualization capabilities of the language.&lt;/p&gt;
+&lt;p&gt;A problem when using R (especially at the beginning) is, that the user interface for the application of different algorithms on the many available data structures varies wildly. Although improvements clearly have been made in the recent years, there is little standardization and every package author basically comes up with their own philosophy on how to handle input/output.&lt;/p&gt;
+&lt;p&gt;As a consequence, starting with geospatial interpolation in R can be frustrating. Of course you can (and will have to) dig through the documentation of the various packages, but as interpolation models are a fairly advanced topic of statistics, those tend to be heavy on technical slang. There are a couple of good blog posts (see &lt;a href=&#34;https://rpubs.com/nabilabd/118172&#34;&gt;here&lt;/a&gt;, &lt;a href=&#34;https://rspatial.org/raster/analysis/4-interpolation.html&#34;&gt;here&lt;/a&gt; and &lt;a href=&#34;https://fishandwhistle.net/post/2019/bathymetry-lake-volume-estimation-using-r/&#34;&gt;here&lt;/a&gt;) on that matter, but they either focus on dealing with specific package interfaces or are again written for an audience that is already well versed in the world of spatial data.&lt;/p&gt;
+&lt;p&gt;When I started to learn about geospatial interpolation with R a couple of years ago, I found it difficult to get up to speed with real world data. Most use cases I found focuses on pre-treated datasets whose conditions I could not sensibly reproduce with my own data or made steps that seemed outright incomprehensible at that time. So I feel like there is a documentation gap for a practical guide of the very basics of geospatial interpolation: how to I get from having a bunch of field observations to a regular raster of interpolated values that I can plot on a nice little map? I am going to present you here with a minimalistic workflow designed to step-by-step explain the principles behind the necessary operations that all approaches for geospatial interpolation with R have in common. That way I hope your entrance into this fascinating world will be more pleasent than mine was.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+library(mapview)
+library(sf)
+library(raster)
+
+pts_NH4 &amp;lt;- readr::read_csv(
+  &amp;quot;https://raw.githubusercontent.com/Ignimbrit/exchange/master/data/2020/Ammonium_Hoppegarten.csv&amp;quot;,
+  col_types = cols(NH4 = col_double(), 
+                   X = col_double(), Y = col_double(), 
+                   fid = col_character(), licence = col_character())
+  ) %&amp;gt;% 
+  select(X, Y, NH4)
+
+sf_NH4 &amp;lt;- st_as_sf(pts_NH4, coords = c(&amp;quot;X&amp;quot;, &amp;quot;Y&amp;quot;), crs = 25833)
+mapview(sf_NH4, map.types = &amp;quot;OpenTopoMap&amp;quot;)
+
+bbox &amp;lt;- c(
+  &amp;quot;xmin&amp;quot; = min(pts_NH4$X),
+  &amp;quot;ymin&amp;quot; = min(pts_NH4$Y),
+  &amp;quot;xmax&amp;quot; = max(pts_NH4$X),
+  &amp;quot;ymax&amp;quot; = max(pts_NH4$Y)
+)
+
+grd_template &amp;lt;- expand.grid(
+  X = seq(from = bbox[&amp;quot;xmin&amp;quot;], to = bbox[&amp;quot;xmax&amp;quot;], by = 20),
+  Y = seq(from = bbox[&amp;quot;ymin&amp;quot;], to = bbox[&amp;quot;ymax&amp;quot;], by = 20) # 20 m resolution
+)
+
+raster_template &amp;lt;- grd_template %&amp;gt;% 
+  mutate(Z = 0) %&amp;gt;% 
+  rasterFromXYZ( # {raster} expects a PROJ.4 string, see https://epsg.io/25833
+    crs = &amp;quot;+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs&amp;quot;)
+
+#########
+library(fields)
+m &amp;lt;- fields::Tps(x = as.matrix(select(pts_NH4, X, Y)), Y = pts_NH4$NH4, miles = FALSE)
+r &amp;lt;- interpolate(raster_template, m)
+
+test &amp;lt;- st_as_sf(pts_NH4, coords = c(&amp;quot;X&amp;quot;, &amp;quot;Y&amp;quot;), crs = 25833)
+test2 &amp;lt;- st_as_sf(mutate(grd_template, id = seq(1, nrow(grd_template))), coords = c(&amp;quot;X&amp;quot;, &amp;quot;Y&amp;quot;), crs = 25833)&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
     
     <item>
       <title>Constructing Mineral Phase Diagrams in R</title>

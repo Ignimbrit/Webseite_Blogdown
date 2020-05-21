@@ -28,12 +28,17 @@
   </url>
   
   <url>
-    <loc>/post/phase_diagrams/</loc>
-    <lastmod>2020-04-27T00:08:38+02:00</lastmod>
+    <loc>/post/spatial_interpolation/</loc>
+    <lastmod>2020-05-21T18:09:20+02:00</lastmod>
   </url>
   
   <url>
     <loc>/post/</loc>
+    <lastmod>2020-05-21T18:09:20+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/phase_diagrams/</loc>
     <lastmod>2020-04-27T00:08:38+02:00</lastmod>
   </url>
   
