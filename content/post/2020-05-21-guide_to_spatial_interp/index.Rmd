@@ -15,19 +15,60 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
-draft: true
+draft: false
 ---
 
 
-One of the most exciting things you can to with R is geospatial interpolation. This means that you have some kind of information (e.g. measurements of, say, soil temperature) for a limited number of locations and then you apply a mathematical model that will provide you with an educated guess of what your result might look like, if you would have measured at every possible location. The practical advantage is clear. Sampling is expensive and therefore always limited. This is especially true in the geosciences, where sampling might require hundred thousands of Euros for drilling deep holes to the formation of your interest.  
+One of the most exciting things you can to with R is geospatial interpolation. This means that you have some kind of information (e.g. measurements of, say, soil temperature) for a limited number of locations and then you apply a mathematical model that will provide you with an educated guess of what your result might look like, if you would have measured at every possible location. The practical advantage is clear. Sampling is expensive and therefore always limited. This is especially true in the geosciences, where sampling might require hundreds of thousands of Euros for drilling deep holes to the formation of your interest.  
   
-  Doing your geospatial interpolation in R is a great opportunity. Many software tools often associated with that task are commercial products that can become fairly expensive, so it is pretty common that if one finishes university or changes a job position, all the work used to learn that tool is rendered void. R on the other hand is always free and offers a wide range of algorithms of all kinds of flavours. An additional bonus is the seamless integration with the powerful data transformation and visualization capabilities of the language.
+  Doing your geospatial interpolation in R is a great opportunity. Many software tools often associated with that task are commercial products that can become fairly expensive, so it is pretty common that if one finishes university or changes a job position, all the work spend on learning that tool is rendered void. R on the other hand is always free and offers a wide range of algorithms of all kinds of flavours. An additional bonus is the seamless integration with the powerful data transformation and visualization capabilities of the language.
   
   A problem when using R (especially at the beginning) is, that the user interface for the application of different algorithms on the many available data structures varies wildly. Although improvements clearly have been made in the recent years, there is little standardization and every package author basically comes up with their own philosophy on how to handle input/output.
   
-  As a consequence, starting with geospatial interpolation in R can be frustrating. Of course you can (and will have to) dig through the documentation of the various packages, but as interpolation models are a fairly advanced topic of statistics, those tend to be heavy on technical slang. There are a couple of good blog posts (see [here](https://rpubs.com/nabilabd/118172), [here](https://rspatial.org/raster/analysis/4-interpolation.html) and [here](https://fishandwhistle.net/post/2019/bathymetry-lake-volume-estimation-using-r/)) on that matter, but they either focus on dealing with specific package interfaces or are again written for an audience that is already well versed in the world of spatial data.
+  As a consequence, starting with geospatial interpolation in R can be frustrating. Of course you can (and will have to) dig through the documentation of the various packages, but as interpolation models are a fairly advanced topic of statistics, those tend to be heavy on technical slang. 
   
-  When I started to learn about geospatial interpolation with R a couple of years ago, I found it difficult to get up to speed with real world data. Most use cases I found focuses on pre-treated datasets whose conditions I could not sensibly reproduce with my own data or made steps that seemed outright incomprehensible at that time. So I feel like there is a documentation gap for a practical guide of the very basics of geospatial interpolation: how to I get from having a bunch of field observations to a regular raster of interpolated values that I can plot on a nice little map? I am going to present you here with a minimalistic workflow designed to step-by-step explain the principles behind the necessary operations that all approaches for geospatial interpolation with R have in common. That way I hope your entrance into this fascinating world will be more pleasent than mine was.  
+  There are a couple of good blog posts (see [here](https://rpubs.com/nabilabd/118172), [here](https://rspatial.org/raster/analysis/4-interpolation.html) and [here](https://fishandwhistle.net/post/2019/bathymetry-lake-volume-estimation-using-r/)) on geospatial interpolation, but they either focus on dealing with specific package interfaces or are again written for an audience that is already well versed in the world of spatial data.
+  
+  When I started to learn about geospatial interpolation with R a couple of years ago, I found it difficult to get up to speed with real world data. Most use cases I found focuses on pre-treated datasets whose conditions I could not sensibly reproduce with my own data or made steps that seemed outright incomprehensible at that time. So I feel like there is a documentation gap for a practical guide of the very basics of geospatial interpolation: how do I get from having a bunch of field observations to a regular raster of interpolated values that I can plot on a nice little map? I am going to present you here with a minimalistic workflow designed to step-by-step explain the principles behind the necessary operations that all approaches for geospatial interpolation with R have in common. That way I hope your entrance into this fascinating world will be more pleasent than mine was.  
+  
+  There are four steps to Geospatial interpolation 
+  0. Have some data
+  1. Create a grid template
+  2. Fit a model 
+  3. Interpolate!
+  
+  So let's start!
+  
+```{r show_setup, message=FALSE}
+library(tidyverse) # data wrangling and plotting
+library(sf) # processing spatial vector data
+library(raster) # processing spatial raster data. !!!overwrites dplyr::select!!!
+library(mapview) # inspecting your data in OpenStreetMaps
+
+# Download the data for this tutorial from Github
+# Data is provided by the senate of the city of Berlin under:
+# dl-de/by-2-0 Umweltatlas Berlin / Grundwassergüte Ammonium (Umweltatlas)
+# for more details see: http://www.stadtentwicklung.berlin.de/umwelt/umweltatlas/ia204.htm
+
+pts_NH4 <- readr::read_csv(
+  "https://raw.githubusercontent.com/Ignimbrit/exchange/master/data/2020/Ammonium_Hoppegarten.csv",
+  col_types = cols(NH4 = col_double(), 
+                   X = col_double(), Y = col_double(), 
+                   fid = col_character(), licence = col_character())
+  ) %>% 
+  dplyr::select(X, Y, NH4)
+
+print(pts_NH4)
+
+```
+  
+  In the chunk above we already solved Step 0: Have some data! For this tutorial I compiled a little demonstration dataset (see comments for the source) that you can download from github to follow my steps. The data comes from a csv that contains 64 measurments of [Ammonium](https://en.wikipedia.org/wiki/Ammonium) in groundwater from a former septic drain field ("Rieselfeld") at a place called Hoppegarten at the outer rim of Berlin. Ammonium in groundwater can be a problem, so it would be good to know exactly how big our problem is, which can hardly be assessed by a coulpe of randomly scattered points per se.
+  
+```{r inspect_points}
+sf_NH4 <- st_as_sf(pts_NH4, coords = c("X", "Y"), crs = 25833)
+mapview(sf_NH4, map.types = "OpenTopoMap")
+```
+  
   
 ```{r sammeln, eval=FALSE}
 
