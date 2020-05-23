@@ -39,11 +39,13 @@ One of the most exciting things you can to with R is geospatial interpolation. T
   
   So let's start!
   
+  # Step 0: Have some data
+  
 ```{r show_setup, message=FALSE}
 library(tidyverse) # data wrangling and plotting
 library(sf) # processing spatial vector data
 library(raster) # processing spatial raster data. !!!overwrites dplyr::select!!!
-library(mapview) # inspecting your data in OpenStreetMaps
+
 
 # Download the data for this tutorial from Github
 # Data is provided by the senate of the city of Berlin under:
@@ -62,13 +64,92 @@ print(pts_NH4)
 
 ```
   
-  In the chunk above we already solved Step 0: Have some data! For this tutorial I compiled a little demonstration dataset (see comments for the source) that you can download from github to follow my steps. The data comes from a csv that contains 64 measurments of [Ammonium](https://en.wikipedia.org/wiki/Ammonium) in groundwater from a former septic drain field ("Rieselfeld") at a place called Hoppegarten at the outer rim of Berlin. Ammonium in groundwater can be a problem, so it would be good to know exactly how big our problem is, which can hardly be assessed by a coulpe of randomly scattered points per se.
-  
-```{r inspect_points}
-sf_NH4 <- st_as_sf(pts_NH4, coords = c("X", "Y"), crs = 25833)
-mapview(sf_NH4, map.types = "OpenTopoMap")
+  In the chunk above we already solved Step 0: Have some data! For this tutorial I compiled a little demonstration dataset (see comments for the source) that you can download from github to follow my steps. The data comes from a csv that contains 64 measurements of [Ammonium](https://en.wikipedia.org/wiki/Ammonium) (chemical formula NH4+) in groundwater from a former septic drain field ("Rieselfeld") at a place called Hoppegarten at the outer rim of Berlin. Ammonium in groundwater can be a problem, so it would be good to know exactly how big our problem is, which can hardly be assessed by a couple of randomly scattered points per se.
+
+```{r pts_plot}
+point_plot <- ggplot(
+  data = pts_NH4,
+  mapping = aes(x = X, y = Y, color = NH4)) +
+  geom_point(size = 3) +
+  scale_color_gradientn(colors = c("blue", "yellow", "red"))
+
+point_plot
 ```
   
+  We can see from plotting the points alone that there seems to be som spatial dependency on the ammonium concentration. Samples with high concentration seem to be sitting mostly at the center of the plot. This is all we need: a coordinate pair (in this context sometimes referred to as the independent variables) and an associated continuous variable (the corresponding dependent variable). If there is a spatial pattern behind the values of the continuous variable (so that it really is depending on the coordinates specifying its position), geospatial interpolation can work.
+  
+  # Step 1: Create a grid template
+  
+  This is one of the less intuitive steps but a very important one nonetheless. You need to specify were you would like to interpolate (aka generate new information), before you actually have that new information. When learning about geospatial interpolation with R in the first place, this was the step used to bother me the most. After all: how am I supposed to know where I would like my information, if I do not actually have any for now?
+  
+  I will not dive any further into the why and hows here. For now just accept that we need a template to later fill it with interpolated values, and that creating this template is super easy, so that you should not worry about it. There are a couple of catches, but we will discuss those as we encounter then. Let's start with a very basic approach to grid template making.
+  
+  ## Option a) The simple approach
+  
+```{r simple_gridmaking}
+# First let's define a bounding Box, a rectangle that contains all our data
+# points. There are many ways to do this but I am keeping it as simple as
+# possible on purpose here
+bbox <- c(
+  "xmin" = min(pts_NH4$X),
+  "ymin" = min(pts_NH4$Y),
+  "xmax" = max(pts_NH4$X),
+  "ymax" = max(pts_NH4$Y)
+)
+
+grd_template <- expand.grid(
+  X = seq(from = bbox["xmin"], to = bbox["xmax"], by = 20),
+  Y = seq(from = bbox["ymin"], to = bbox["ymax"], by = 20) # 20 m resolution
+)
+
+grid_plot <- ggplot() +
+  geom_point(data = grd_template, aes(x = X, y = Y), size = 0.01) +
+  geom_point(data = pts_NH4,
+  mapping = aes(x = X, y = Y, color = NH4), size = 3) +
+  scale_color_gradientn(colors = c("blue", "yellow", "red")) +
+  coord_cartesian( #zooming in so we can actually see something
+    xlim = c(408000, 409000), ylim = c(5815000, 5816000))
+
+grid_plot
+
+```
+  
+  So this is the most simple approach on making a grid_template I could think of. And when I simple I mean that in an absolute positive way. No dependencies, no domain specific knowledge. It has the advantage of needing no other libraries and producing a `data.frame` which is easy to handle. 
+  
+  ## Option b) the classical approach
+  
+  Using `base::expand.grid` is not necessarily the best way to build your grid template. Another popular way is to use `sf::st_make_grid`
+  
+```{r demonstrate_makegrid}
+sf_NH4 <- st_as_sf(pts_NH4, coords = c("X", "Y"), crs = 25833)
+alt_grd_template_sf <- st_make_grid(
+  sf_NH4, cellsize = c(20, 20), what = "centers") %>%
+  cbind(., st_coordinates(.))
+
+```
+
+  Those commands will create a fairly similar grid to the one we made above, but there are some differences.
+  
+  * The `alt_grd_template_sf` does actually contain all sample points. If you've been following my steps closely, you might have noticed, that I made no effort ensuring that when creating `grd_template` in my call to `expand.grid`
+  * `alt_grd_template_sf` was created using functions from the `sf`package and the object itself is not a simple `data.frame` but comes in a data structure profided by that package (a `sfc`, or simple feature coloumn, to be specific).
+  
+  Working with the data structures from the `sf` package is great. They are specifically build to handle spatial vector data and many interpolation algorithms that are out their are explicitly tailored towards accepting them or the closely related structures from the "older-sister-package" `sp`. 
+  
+  
+  # Step 1b: Rasterizing your grid template
+  
+  I warned you that this tutorial would have to be a bit convoluted. We have our grid template now and it contains all the information we need, but not in every case in the data structure we need it to be in. Regardless whether you prefer `base::expand.grid` or `sf::st_make_grid`, what you get in return is essentially a table of point coordinates.
+  
+  For some interpolation algorithms this is just fine as they work well with data.frames. Others don't. Usually there are ways to make it work but often enough things will get messy. As we want to look at a couple of different interpolation methods from different packages with vastly different interfaces and expectations, we will create a copy of our grid template in a dirrefent data structure to make our life a little easier.
+  
+```{r rasterize_template}
+grd_template_raster <- grd_template %>% 
+  dplyr::mutate(Z = 0) %>% 
+  raster::rasterFromXYZ( # {raster} expects a PROJ.4 string, see https://epsg.io/25833
+    crs = "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+
+
+```
   
 ```{r sammeln, eval=FALSE}
 
