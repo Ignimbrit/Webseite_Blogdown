@@ -169,6 +169,7 @@ grd_template_raster <- grd_template %>%
   In R those two processes are (usually) cleanly separated. This apparently makes perfect sense to statisticians for which, after all, the whole language was build. For the average geoscience rookie/end user this might be a novel concept and appear unnecessarily cumbersome. Why would we separate fitting of data with interpolating from it? I mean, it's not like we are going to use the fitted model on any other data anyway. But bear with me, it can be done.
   
 ```{r fitting_models}
+
 # We start with functions that return model objects as this is the most 
 # common case
 
@@ -199,7 +200,6 @@ fit_GAM <- mgcv::gam( # using {mgcv}
   NH4 ~ s(X, Y),      # here come our X/Y/Z data - straightforward enough
   data = pts_NH4      # specifiy in which object the data is stored
 )
-
 
 # Next we use a couple of functions that have a slightly different modus
 # operandi as they in fact already return interpolated Z values.
