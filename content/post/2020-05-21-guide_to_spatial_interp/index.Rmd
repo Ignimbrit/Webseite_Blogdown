@@ -42,10 +42,18 @@ One of the most exciting things you can to with R is geospatial interpolation. T
   # Step 0: Have some data
   
 ```{r show_setup, message=FALSE}
-library(tidyverse) # data wrangling and plotting
+
+# We will need some packages for (spatial) data processing
+library(tidyverse) # wrangling tabular data and plotting
 library(sf) # processing spatial vector data
+library(sp) # another vector data package necessary for continuity
 library(raster) # processing spatial raster data. !!!overwrites dplyr::select!!!
 
+# And a lot of different packages to test their interpolation functions
+library(gstat)  # inverse distance weighted, Kriging
+library(fields) # Thin Plate Spline
+library(interp) # Triangulation
+library(mgcv)   # Spatial GAM
 
 # Download the data for this tutorial from Github
 # Data is provided by the senate of the city of Berlin under:
@@ -138,9 +146,9 @@ alt_grd_template_sf <- st_make_grid(
   
   # Step 1b: Rasterizing your grid template
   
-  I warned you that this tutorial would have to be a bit convoluted. We have our grid template now and it contains all the information we need, but not in every case in the data structure we need it to be in. Regardless whether you prefer `base::expand.grid` or `sf::st_make_grid`, what you get in return is essentially a table of point coordinates.
+  I warned you that this tutorial would have to be a bit convoluted. We have our grid template now and it contains all the information we need. Regardless whether you prefer `base::expand.grid` or `sf::st_make_grid`, what you get in return is essentially a table of point coordinates.
   
-  For some interpolation algorithms this is just fine as they work well with data.frames. Others don't. Usually there are ways to make it work but often enough things will get messy. As we want to look at a couple of different interpolation methods from different packages with vastly different interfaces and expectations, we will create a copy of our grid template in a dirrefent data structure to make our life a little easier.
+  For some interpolation algorithms this is just fine as they work well with data.frames. Others don't. Usually there are ways to make it work but often enough things will get messy. As we want to look at a couple of different interpolation methods from different packages with vastly different interfaces and expectations, we will create a copy of our grid template in a different data structure to make our life a little easier.
   
 ```{r rasterize_template}
 grd_template_raster <- grd_template %>% 
@@ -150,6 +158,52 @@ grd_template_raster <- grd_template %>%
 
 
 ```
+  
+  # Step 2: Fit a model
+  
+  Now that we have surpassed the first line of confusion we can progress to the next one. Because even now that We have data to interpolate from and a grid to interpolate to, the process in between does (in most cases) not require one but two steps. The algorithm of our choice must be fitted to our data before we can use that fit to make interpolations. 
+  In R those two processes are (usually) cleanly separated. This apparently makes perfect sense to statisticians for which, after all, the whole language was build. For the average geoscience rookie/end user this might be a novel concept and appear unnecessarily cumbersome. Why would we separate fitting of data with interpolating from it? I mean, it's not like we are going to use the fitted model on any other data anyway. But bear with me, it can be done.
+  
+```{r fitting_models}
+# Nearest Neighbor
+fit_NN <- gstat::gstat( # using package {gstat} 
+  formula = NH4 ~ 1,    # The column `NH4` is what we are interested in
+  data = as(sf_NH4, "Spatial"), # using {sf} and converting to {sp}, which is expected
+  nmax = 10, nmin = 3 # Number of neighboring observations used for the fit
+)
+
+# Inverse Distance Weighting
+fit_IDW <- gstat::gstat( # The setup here is quite similar to NN
+  formula = NH4 ~ 1,
+  data = as(sf_NH4, "Spatial"),
+  nmax = 10, nmin = 3,
+  set = list(idp = 0.5) # inverse distance power
+)
+
+# Triangular Irregular Surface
+fit_TIN <- interp::interp( # using {interp}
+  x = pts_NH4$X,           # the function actually accepts coordinate vectors
+  y = pts_NH4$Y,
+  z = pts_NH4$NH4,
+  xo = grd_template$X,     # here we already define the target grid
+  yo = grd_template$Y,
+  output = "points"
+)
+
+# Thin Plate Spline Regression
+fit_TPS <- fields::Tps( # using {fields}
+  x = as.matrix(pts_NH4[, c("X", "Y")]), # accepts points but expects them as matix
+  Y = pts_NH4$NH4,  # the dependent variable
+  miles = FALSE     # EPSG 25833 is based in meters
+)
+
+# Generalized Additive Model
+fit_GAM <- mgcv::gam( # using {mgcv}
+  NH4 ~ s(X, Y),      # here come our X/Y/Z data - straightforward enough
+  data = pts_NH4      # specifiy in which object the data is stored
+)
+
+```  
   
 ```{r sammeln, eval=FALSE}
 
