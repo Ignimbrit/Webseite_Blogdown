@@ -25,7 +25,7 @@
 &lt;p&gt;A problem when using R (especially at the beginning) is, that the user interface for the application of different algorithms on the many available data structures varies wildly. Although improvements clearly have been made in the recent years, there is little standardization and every package author basically comes up with their own philosophy on how to handle input/output.&lt;/p&gt;
 &lt;p&gt;As a consequence, starting with geospatial interpolation in R can be frustrating. Of course you can (and will have to) dig through the documentation of the various packages, but as interpolation models are a fairly advanced topic of statistics, those tend to be heavy on technical slang.&lt;/p&gt;
 &lt;p&gt;There are a couple of good blog posts (see &lt;a href=&#34;https://rpubs.com/nabilabd/118172&#34;&gt;here&lt;/a&gt;, &lt;a href=&#34;https://rspatial.org/raster/analysis/4-interpolation.html&#34;&gt;here&lt;/a&gt; and &lt;a href=&#34;https://fishandwhistle.net/post/2019/bathymetry-lake-volume-estimation-using-r/&#34;&gt;here&lt;/a&gt;) on geospatial interpolation, but they either focus on dealing with specific package interfaces or are again written for an audience that is already well versed in the world of spatial data.&lt;/p&gt;
-&lt;p&gt;When I started to learn about geospatial interpolation with R a couple of years ago, I found it difficult to get up to speed with real world data. Most use cases I found focus on pre-treated datasets whose conditions I could not sensibly reproduce with my own data or made steps that seemed outright incomprehensible at that time. So I feel like there is a documentation gap for a practical guide on the very basics of geospatial interpolation: how do I get from having a bunch of field observations to a regular raster of interpolated values that I can plot on a nice little map? I am going to present here a minimalistic workflow designed to step-by-step explain the principles behind the necessary operations, that all approaches for geospatial interpolation with R have in common. That way I hope your entrance into this fascinating world will be more pleasent than mine was.&lt;/p&gt;
+&lt;p&gt;When I started to learn about geospatial interpolation with R a couple of years ago, I found it difficult to get up to speed with real world data. Most use cases I found focus on pre-treated datasets whose conditions I could not sensibly reproduce with my own data or made steps that seemed outright incomprehensible at that time. So I feel like there is a documentation gap for a practical guide on the very basics of geospatial interpolation: how do I get from having a bunch of field observations to a regular raster of interpolated values that I can plot on a nice little map? I am going to present here a minimalistic workflow designed to step-by-step explain the principles behind the necessary operations, that all approaches for geospatial interpolation with R have in common. That way I hope your entrance into this fascinating world will be more pleasant than mine was.&lt;/p&gt;
 &lt;p&gt;There are four steps to Geospatial interpolation&lt;/p&gt;
 &lt;ol start=&#34;0&#34; style=&#34;list-style-type: decimal&#34;&gt;
 &lt;li&gt;Have some data&lt;/li&gt;
@@ -81,7 +81,7 @@ print(pts_NH4)&lt;/code&gt;&lt;/pre&gt;
 ##  9 408865. 5814943.  12  
 ## 10 408729. 5814949.  24.4
 ## # ... with 54 more rows&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;In the chunk above we already solved Step 0: Have some data! For this tutorial I compiled a little demonstration dataset (see comments for the source) that you can download from github to follow my steps. The data comes from a csv that contains 64 measurements of &lt;a href=&#34;https://en.wikipedia.org/wiki/Ammonium&#34;&gt;Ammonium&lt;/a&gt; (chemical formula NH4+) in groundwater from a former septic drain field (“Rieselfeld”) at a place called Hoppegarten at the outer rim of Berlin. Ammonium in groundwater can be a problem, so it would be good to know exactly how big our problem is, which can hardly be assessed by a couple of randomly scattered points per se.&lt;/p&gt;
+&lt;p&gt;In the chunk above we already solved Step 0: Have some data! For this tutorial I compiled a little demonstration dataset (see comments for the source) that you can download from github to follow my steps. The data comes from a csv that contains 64 measurements of &lt;a href=&#34;https://en.wikipedia.org/wiki/Ammonium&#34;&gt;Ammonium&lt;/a&gt; (chemical formula NH4+) in groundwater from a former septic drain field (“Rieselfeld”) at a place called Hoppegarten at the outer rim of Berlin. Ammonia in groundwater can be a problem, so it would be good to know exactly how big our problem is, which can hardly be assessed by a couple of randomly scattered points per se.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;point_plot &amp;lt;- ggplot(
   data = pts_NH4,
   mapping = aes(x = X, y = Y, color = NH4)) +
@@ -90,11 +90,11 @@ print(pts_NH4)&lt;/code&gt;&lt;/pre&gt;
 
 point_plot&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/2020-05-21-guide_to_spatial_interp/index_files/figure-html/pts_plot-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;We can see from plotting the points alone that there seems to be som spatial dependency on the ammonium concentration. Samples with high concentration seem to be sitting mostly at the center of the plot. This is all we need: a coordinate pair (in this context sometimes referred to as the independent variables) and an associated continuous variable (the corresponding dependent variable). If there is a spatial pattern behind the values of the continuous variable (so that it really is depending on the coordinates specifying its position), geospatial interpolation can work.&lt;/p&gt;
+&lt;p&gt;We can see from plotting the points alone that there seems to be some spatial dependency on the ammonia concentration. Samples with high concentration seem to be sitting mostly at the center of the plot. This is all we need: a coordinate pair (in this context sometimes referred to as the independent variables) and an associated continuous variable (the corresponding dependent variable). If there is a spatial pattern behind the values of the continuous variable (so that it really is depending on the coordinates specifying its position), geospatial interpolation can work.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;step-1-create-a-grid-template&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;Step 1: Create a grid template&lt;/h3&gt;
-&lt;p&gt;This is one of the less intuitive steps but a very important one nonetheless. You need to specify were you would like to interpolate (aka generate new information), before you actually have that new information. When learning about geospatial interpolation with R in the first place, this was the step that used to bother me the most. After all: how am I supposed to know where I would like my information, if I do not actually evem have it yet?&lt;/p&gt;
+&lt;p&gt;This is one of the less intuitive steps but a very important one nonetheless. You need to specify were you would like to interpolate (aka generate new information), before you actually have that new information. When learning about geospatial interpolation with R in the first place, this was the step that used to bother me the most. After all: how am I supposed to know where I would like my information, if I do not actually even have it yet?&lt;/p&gt;
 &lt;p&gt;I will not dive any further into the whys and hows here. For now just accept that we need a template to later fill with interpolated values, and that creating this template is super easy, so that you should not worry about it. There are a couple of catches, but we will discuss those as we encounter them. Let’s start with a very basic approach to grid template making.&lt;/p&gt;
 &lt;div id=&#34;option-a-the-simple-approach&#34; class=&#34;section level4&#34;&gt;
 &lt;h4&gt;Option a) The simple approach&lt;/h4&gt;
@@ -193,7 +193,7 @@ fit_IDW &amp;lt;- gstat::gstat( # The setup here is quite similar to NN
 
 # Thin Plate Spline Regression
 fit_TPS &amp;lt;- fields::Tps( # using {fields}
-  x = as.matrix(pts_NH4[, c(&amp;quot;X&amp;quot;, &amp;quot;Y&amp;quot;)]), # accepts points but expects them as matix
+  x = as.matrix(pts_NH4[, c(&amp;quot;X&amp;quot;, &amp;quot;Y&amp;quot;)]), # accepts points but expects them as matrix
   Y = pts_NH4$NH4,  # the dependent variable
   miles = FALSE     # EPSG 25833 is based in meters
 )
@@ -201,7 +201,7 @@ fit_TPS &amp;lt;- fields::Tps( # using {fields}
 # Generalized Additive Model
 fit_GAM &amp;lt;- mgcv::gam( # using {mgcv}
   NH4 ~ s(X, Y),      # here come our X/Y/Z data - straightforward enough
-  data = pts_NH4      # specifiy in which object the data is stored
+  data = pts_NH4      # specify in which object the data is stored
 )
 
 # Next we use a couple of functions that have a slightly different modus
@@ -292,7 +292,7 @@ interp_GAM &amp;lt;- grd_template %&amp;gt;%
 &lt;/div&gt;
 &lt;div id=&#34;visualization-conclusion-further-reading&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;Visualization, conclusion, further reading&lt;/h3&gt;
-&lt;p&gt;Now that we have interpolated rasters, we should visualize them an have a look!&lt;/p&gt;
+&lt;p&gt;Now that we have interpolated rasters, we should visualize them and have a look!&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;plot_my_rasters &amp;lt;- function(raster_object, raster_name){
   
   df &amp;lt;- rasterToPoints(raster_object) %&amp;gt;% as_tibble()
@@ -330,12 +330,12 @@ plotlist &amp;lt;- map2(
   (plotlist[[3]] + plotlist[[4]]) /
   (plotlist[[5]] + plotlist[[6]])&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/2020-05-21-guide_to_spatial_interp/index_files/figure-html/viz-1.png&#34; width=&#34;672&#34; /&gt;
-As you can see, the result strongly depends on the algorithm that was used for the interpolation. This is somewhat overemphasized in the plot above, because for this tutorial I did not attempt at all to fine tune the different interpolation algorithms. In a real project in either science or engineering, one would have to put a lot of thought into model parameterization and carefully evaluate the natural situation and the mathematical implications. But this is stuff for another day’s blogpost. If you want to learn more, here are a couple of ressources you could check out:&lt;/p&gt;
+As you can see, the result strongly depends on the algorithm that was used for the interpolation. This is somewhat overemphasized in the plot above, because for this tutorial I did not attempt at all to fine tune the different interpolation algorithms. In a real project in either science or engineering, one would have to put a lot of thought into model parameterization and carefully evaluate the natural situation and the mathematical implications. But this is stuff for another day’s blogpost. If you want to learn more, here are a couple of resources you could check out:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;The company Goldensoft that sells the commercial interpolation software surfer has &lt;a href=&#34;https://support.goldensoftware.com/hc/en-us/articles/231348728-A-Basic-Understanding-of-Surfer-Gridding-Methods-Part-1&#34;&gt;on its website&lt;/a&gt; a nice overview for many of the methods I used in this blogpost that can serve as a starting point&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://github.com/NCAR/fields/blob/master/fieldsVignette.pdf&#34;&gt;The vignette of {fields}&lt;/a&gt; provides a more in depth dive into the intricate details of spatial interpolation with R&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://twitter.com/noamross&#34;&gt;Noam Ross&lt;/a&gt; has created an &lt;a href=&#34;https://noamross.github.io/gams-in-r-course/&#34;&gt;excellent online course on (spatial) Generalized Additive Models&lt;/a&gt; that will get you from zero to hero in no time.&lt;/li&gt;
-&lt;li&gt;Check out &lt;a href=&#34;https://cran.r-project.org/web/packages/gstat/vignettes/gstat.pdf&#34;&gt;{gstat}’s vignettes&lt;/a&gt; for more details on how to get more control ybout Kriging.&lt;/li&gt;
+&lt;li&gt;Check out &lt;a href=&#34;https://cran.r-project.org/web/packages/gstat/vignettes/gstat.pdf&#34;&gt;{gstat}’s vignettes&lt;/a&gt; for more details on how to get more control about Kriging.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/div&gt;
 </description>
