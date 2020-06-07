@@ -8,35 +8,50 @@ tags: []
 subtitle: ''
 summary: ''
 authors: []
-lastmod: '2020-05-21T18:09:20+02:00'
+lastmod: '2020-06-06T18:09:20+02:00'
 featured: no
 image:
   caption: ''
   focal_point: ''
   preview_only: no
 projects: []
-draft: true
+draft: false
 ---
 
 
 
 <p>One of the most exciting things you can to with R is geospatial interpolation. This means that you have some kind of information (e.g. measurements of, say, soil temperature) for a limited number of locations and then you apply a mathematical model that will provide you with an educated guess of what your result might look like, if you would have measured at every possible location. The practical advantage is clear. Sampling is expensive and therefore always limited. This is especially true in the geosciences, where sampling might require hundreds of thousands of Euros for drilling deep holes to the formation of your interest.</p>
-<p>Doing your geospatial interpolation in R is a great opportunity. Many software tools often associated with that task are commercial products that can become fairly expensive, so it is pretty common that if one finishes university or changes a job position, all the work spend on learning that tool is rendered void. R on the other hand is always free and offers a wide range of algorithms of all kinds of flavours. An additional bonus is the seamless integration with the powerful data transformation and visualization capabilities of the language.</p>
+<p>Doing your geospatial interpolation in R is a great opportunity. Many software tools often associated with that task are commercial products that can become fairly expensive, so it is pretty common that if one finishes university or changes a job position, all the work spend on learning that tool is rendered void. R on the other hand is always free and offers a wide range of algorithms of all kinds of flavors. An additional bonus is the seamless integration with the powerful data transformation and visualization capabilities of the language.</p>
 <p>A problem when using R (especially at the beginning) is, that the user interface for the application of different algorithms on the many available data structures varies wildly. Although improvements clearly have been made in the recent years, there is little standardization and every package author basically comes up with their own philosophy on how to handle input/output.</p>
 <p>As a consequence, starting with geospatial interpolation in R can be frustrating. Of course you can (and will have to) dig through the documentation of the various packages, but as interpolation models are a fairly advanced topic of statistics, those tend to be heavy on technical slang.</p>
 <p>There are a couple of good blog posts (see <a href="https://rpubs.com/nabilabd/118172">here</a>, <a href="https://rspatial.org/raster/analysis/4-interpolation.html">here</a> and <a href="https://fishandwhistle.net/post/2019/bathymetry-lake-volume-estimation-using-r/">here</a>) on geospatial interpolation, but they either focus on dealing with specific package interfaces or are again written for an audience that is already well versed in the world of spatial data.</p>
-<p>When I started to learn about geospatial interpolation with R a couple of years ago, I found it difficult to get up to speed with real world data. Most use cases I found focuses on pre-treated datasets whose conditions I could not sensibly reproduce with my own data or made steps that seemed outright incomprehensible at that time. So I feel like there is a documentation gap for a practical guide of the very basics of geospatial interpolation: how do I get from having a bunch of field observations to a regular raster of interpolated values that I can plot on a nice little map? I am going to present you here with a minimalistic workflow designed to step-by-step explain the principles behind the necessary operations that all approaches for geospatial interpolation with R have in common. That way I hope your entrance into this fascinating world will be more pleasent than mine was.</p>
-<p>There are four steps to Geospatial interpolation
-0. Have some data
-1. Create a grid template
-2. Fit a model
-3. Interpolate!</p>
+<p>When I started to learn about geospatial interpolation with R a couple of years ago, I found it difficult to get up to speed with real world data. Most use cases I found focus on pre-treated datasets whose conditions I could not sensibly reproduce with my own data or made steps that seemed outright incomprehensible at that time. So I feel like there is a documentation gap for a practical guide on the very basics of geospatial interpolation: how do I get from having a bunch of field observations to a regular raster of interpolated values that I can plot on a nice little map? I am going to present here a minimalistic workflow designed to step-by-step explain the principles behind the necessary operations, that all approaches for geospatial interpolation with R have in common. That way I hope your entrance into this fascinating world will be more pleasent than mine was.</p>
+<p>There are four steps to Geospatial interpolation</p>
+<ol start="0" style="list-style-type: decimal">
+<li>Have some data</li>
+<li>Create a grid template</li>
+<li>Fit a model</li>
+<li>Interpolate!</li>
+</ol>
 <p>So let’s start!</p>
-<p># Step 0: Have some data</p>
-<pre class="r"><code>library(tidyverse) # data wrangling and plotting
+<div id="step-0-have-some-data" class="section level3">
+<h3>Step 0: Have some data</h3>
+<pre class="r"><code># We will need some packages for (spatial) data processing
+library(tidyverse) # wrangling tabular data and plotting
 library(sf) # processing spatial vector data
+library(sp) # another vector data package necessary for continuity
 library(raster) # processing spatial raster data. !!!overwrites dplyr::select!!!
 
+# And a lot of different packages to test their interpolation functions
+library(gstat)  # inverse distance weighted, Kriging
+library(fields) # Thin Plate Spline
+library(interp) # Triangulation
+library(mgcv)   # Spatial GAM
+library(automap)# Automatic approach to Kriging
+
+# Finally, some packages to make pretty plots
+library(patchwork)
+library(viridis)
 
 # Download the data for this tutorial from Github
 # Data is provided by the senate of the city of Berlin under:
@@ -76,10 +91,13 @@ print(pts_NH4)</code></pre>
 point_plot</code></pre>
 <p><img src="/post/2020-05-21-guide_to_spatial_interp/index_files/figure-html/pts_plot-1.png" width="672" /></p>
 <p>We can see from plotting the points alone that there seems to be som spatial dependency on the ammonium concentration. Samples with high concentration seem to be sitting mostly at the center of the plot. This is all we need: a coordinate pair (in this context sometimes referred to as the independent variables) and an associated continuous variable (the corresponding dependent variable). If there is a spatial pattern behind the values of the continuous variable (so that it really is depending on the coordinates specifying its position), geospatial interpolation can work.</p>
-<p># Step 1: Create a grid template</p>
-<p>This is one of the less intuitive steps but a very important one nonetheless. You need to specify were you would like to interpolate (aka generate new information), before you actually have that new information. When learning about geospatial interpolation with R in the first place, this was the step used to bother me the most. After all: how am I supposed to know where I would like my information, if I do not actually have any for now?</p>
-<p>I will not dive any further into the why and hows here. For now just accept that we need a template to later fill it with interpolated values, and that creating this template is super easy, so that you should not worry about it. There are a couple of catches, but we will discuss those as we encounter then. Let’s start with a very basic approach to grid template making.</p>
-<p>## Option a) The simple approach</p>
+</div>
+<div id="step-1-create-a-grid-template" class="section level3">
+<h3>Step 1: Create a grid template</h3>
+<p>This is one of the less intuitive steps but a very important one nonetheless. You need to specify were you would like to interpolate (aka generate new information), before you actually have that new information. When learning about geospatial interpolation with R in the first place, this was the step that used to bother me the most. After all: how am I supposed to know where I would like my information, if I do not actually evem have it yet?</p>
+<p>I will not dive any further into the whys and hows here. For now just accept that we need a template to later fill with interpolated values, and that creating this template is super easy, so that you should not worry about it. There are a couple of catches, but we will discuss those as we encounter them. Let’s start with a very basic approach to grid template making.</p>
+<div id="option-a-the-simple-approach" class="section level4">
+<h4>Option a) The simple approach</h4>
 <pre class="r"><code># First let&#39;s define a bounding Box, a rectangle that contains all our data
 # points. There are many ways to do this but I am keeping it as simple as
 # possible on purpose here
@@ -101,67 +119,222 @@ grid_plot &lt;- ggplot() +
   mapping = aes(x = X, y = Y, color = NH4), size = 3) +
   scale_color_gradientn(colors = c(&quot;blue&quot;, &quot;yellow&quot;, &quot;red&quot;)) +
   coord_cartesian( #zooming in so we can actually see something
-    xlim = c(408000, 409000), ylim = c(5815000, 5816000))
+    xlim = c(408000, 409000), ylim = c(5815000, 5816000)) +
+  theme_bw()
 
 grid_plot</code></pre>
 <p><img src="/post/2020-05-21-guide_to_spatial_interp/index_files/figure-html/simple_gridmaking-1.png" width="672" /></p>
-<p>So this is the most simple approach on making a grid_template I could think of. And when I simple I mean that in an absolute positive way. No dependencies, no domain specific knowledge. It has the advantage of needing no other libraries and producing a <code>data.frame</code> which is easy to handle.</p>
-<p>## Option b) the classical approach</p>
+<p>So this is the most simple approach on making a grid template I could think of. And when I say simple I mean that in an absolute positive way. No dependencies, no domain specific knowledge. It has the advantage of needing no other libraries and producing a <code>data.frame</code> which is easy to handle.</p>
+</div>
+<div id="option-b-the-classical-approach" class="section level4">
+<h4>Option b) the classical approach</h4>
 <p>Using <code>base::expand.grid</code> is not necessarily the best way to build your grid template. Another popular way is to use <code>sf::st_make_grid</code></p>
 <pre class="r"><code>sf_NH4 &lt;- st_as_sf(pts_NH4, coords = c(&quot;X&quot;, &quot;Y&quot;), crs = 25833)
-alt_grd_template_sf &lt;- st_make_grid(
-  sf_NH4, cellsize = c(20, 20), what = &quot;centers&quot;) %&gt;%
-  cbind(., st_coordinates(.))</code></pre>
+
+alt_grd_template_sf &lt;- sf_NH4 %&gt;% 
+  st_bbox() %&gt;% 
+  st_as_sfc() %&gt;% 
+  st_make_grid(
+  cellsize = c(20, 20),
+  what = &quot;centers&quot;
+  ) %&gt;%
+  st_as_sf() %&gt;%
+  cbind(., st_coordinates(.)) %&gt;% 
+  st_drop_geometry() %&gt;% 
+  mutate(Z = 0)</code></pre>
 <p>Those commands will create a fairly similar grid to the one we made above, but there are some differences.</p>
 <ul>
 <li>The <code>alt_grd_template_sf</code> does actually contain all sample points. If you’ve been following my steps closely, you might have noticed, that I made no effort ensuring that when creating <code>grd_template</code> in my call to <code>expand.grid</code></li>
-<li><code>alt_grd_template_sf</code> was created using functions from the <code>sf</code>package and the object itself is not a simple <code>data.frame</code> but comes in a data structure profided by that package (a <code>sfc</code>, or simple feature coloumn, to be specific).</li>
+<li><code>alt_grd_template_sf</code> was created using functions from the <code>sf</code> package and comes in a data structure provided by that package (a <code>sfc</code>, or simple feature column, to be specific). For continuity I converted the object into a <code>data.frame</code>.</li>
+<li>You can probably see that in order to leverage <code>sf::st_make_grid</code> we have to apply an awful lot of functions and skim through several data types before we actually get to have our “simple” XYZ grid. Coming up with this requires the user to already know a lot about the data classes from the <code>sf</code> package and their interdependencies.</li>
 </ul>
-<p>Working with the data structures from the <code>sf</code> package is great. They are specifically build to handle spatial vector data and many interpolation algorithms that are out their are explicitly tailored towards accepting them or the closely related structures from the “older-sister-package” <code>sp</code>.</p>
-<p># Step 1b: Rasterizing your grid template</p>
-<p>I warned you that this tutorial would have to be a bit convoluted. We have our grid template now and it contains all the information we need, but not in every case in the data structure we need it to be in. Regardless whether you prefer <code>base::expand.grid</code> or <code>sf::st_make_grid</code>, what you get in return is essentially a table of point coordinates.</p>
-<p>For some interpolation algorithms this is just fine as they work well with data.frames. Others don’t. Usually there are ways to make it work but often enough things will get messy. As we want to look at a couple of different interpolation methods from different packages with vastly different interfaces and expectations, we will create a copy of our grid template in a dirrefent data structure to make our life a little easier.</p>
-<pre class="r"><code>grd_template_raster &lt;- grd_template %&gt;% 
+<p>In the long run, if you intend to take a deeper dive into the Rspatial world, I recommend to <a href="https://geocompr.robinlovelace.net/">read up about how to use package <code>sf</code></a>. It was specifically build to handle spatial vector data and many interpolation algorithms that are out there are explicitly tailored towards accepting its classes or the closely related structures from the “older-sister-package” <code>sp</code>.</p>
+</div>
+</div>
+<div id="step-1b-rasterizing-your-grid-template" class="section level3">
+<h3>Step 1b: Rasterizing your grid template</h3>
+<p>I warned you that this tutorial would have to be a bit convoluted. We have our grid template now and it contains all the information we need. Regardless whether you prefer <code>base::expand.grid</code> or <code>sf::st_make_grid</code>, what you get in return is essentially a table of point coordinates.</p>
+<p>For some interpolation algorithms this is just fine as they work well with data.frames. Others don’t. Usually there are ways to make it work but often enough things will get messy. As we want to look at a couple of different interpolation methods from different packages with vastly different interfaces and expectations, we will create a copy of our grid template in a different data structure to make our life a little easier.</p>
+<pre class="r"><code># {raster} expects a PROJ.4 string, see https://epsg.io/25833
+crs_raster_format &lt;- &quot;+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs&quot;
+
+grd_template_raster &lt;- grd_template %&gt;% 
   dplyr::mutate(Z = 0) %&gt;% 
-  raster::rasterFromXYZ( # {raster} expects a PROJ.4 string, see https://epsg.io/25833
-    crs = &quot;+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs&quot;)</code></pre>
-<pre class="r"><code>library(tidyverse)
-library(mapview)
-library(sf)
-library(raster)
+  raster::rasterFromXYZ( 
+    crs = crs_raster_format)
 
-pts_NH4 &lt;- readr::read_csv(
-  &quot;https://raw.githubusercontent.com/Ignimbrit/exchange/master/data/2020/Ammonium_Hoppegarten.csv&quot;,
-  col_types = cols(NH4 = col_double(), 
-                   X = col_double(), Y = col_double(), 
-                   fid = col_character(), licence = col_character())
-  ) %&gt;% 
-  select(X, Y, NH4)
+# Let&#39;s also carry with us the raster from the alternative approach
+alt_grd_template_raster &lt;- alt_grd_template_sf %&gt;% 
+  raster::rasterFromXYZ(
+     crs = crs_raster_format
+  )</code></pre>
+</div>
+<div id="step-2-fit-a-model" class="section level3">
+<h3>Step 2: Fit a model</h3>
+<p>Now that we have surpassed the first line of confusion we can progress to the next one. Because even now that we have data to interpolate from and a grid to interpolate to, the process in between does (in most cases) not require one but two more steps. The algorithm of our choice must be fitted to our data before we can use that fit to make interpolations.
+In R those two processes are (usually) cleanly separated. This apparently makes perfect sense to statisticians for which, after all, the whole language was build. For the average geoscience rookie/end user, however, this might be a novel concept and appear unnecessarily cumbersome. Why would we separate fitting of data with interpolating from it? After all, it’s not like we are going to use the fitted model on any other data anyway. But bear with me, it can be done.</p>
+<pre class="r"><code># We start with functions that return model objects as this is the most 
+# common case
 
-sf_NH4 &lt;- st_as_sf(pts_NH4, coords = c(&quot;X&quot;, &quot;Y&quot;), crs = 25833)
-mapview(sf_NH4, map.types = &quot;OpenTopoMap&quot;)
-
-bbox &lt;- c(
-  &quot;xmin&quot; = min(pts_NH4$X),
-  &quot;ymin&quot; = min(pts_NH4$Y),
-  &quot;xmax&quot; = max(pts_NH4$X),
-  &quot;ymax&quot; = max(pts_NH4$Y)
+# Nearest Neighbor
+fit_NN &lt;- gstat::gstat( # using package {gstat} 
+  formula = NH4 ~ 1,    # The column `NH4` is what we are interested in
+  data = as(sf_NH4, &quot;Spatial&quot;), # using {sf} and converting to {sp}, which is expected
+  nmax = 10, nmin = 3 # Number of neighboring observations used for the fit
 )
 
-grd_template &lt;- expand.grid(
-  X = seq(from = bbox[&quot;xmin&quot;], to = bbox[&quot;xmax&quot;], by = 20),
-  Y = seq(from = bbox[&quot;ymin&quot;], to = bbox[&quot;ymax&quot;], by = 20) # 20 m resolution
+# Inverse Distance Weighting
+fit_IDW &lt;- gstat::gstat( # The setup here is quite similar to NN
+  formula = NH4 ~ 1,
+  data = as(sf_NH4, &quot;Spatial&quot;),
+  nmax = 10, nmin = 3,
+  set = list(idp = 0.5) # inverse distance power
 )
 
-raster_template &lt;- grd_template %&gt;% 
-  mutate(Z = 0) %&gt;% 
-  rasterFromXYZ( # {raster} expects a PROJ.4 string, see https://epsg.io/25833
-    crs = &quot;+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs&quot;)
+# Thin Plate Spline Regression
+fit_TPS &lt;- fields::Tps( # using {fields}
+  x = as.matrix(pts_NH4[, c(&quot;X&quot;, &quot;Y&quot;)]), # accepts points but expects them as matix
+  Y = pts_NH4$NH4,  # the dependent variable
+  miles = FALSE     # EPSG 25833 is based in meters
+)
 
-#########
-library(fields)
-m &lt;- fields::Tps(x = as.matrix(select(pts_NH4, X, Y)), Y = pts_NH4$NH4, miles = FALSE)
-r &lt;- interpolate(raster_template, m)
+# Generalized Additive Model
+fit_GAM &lt;- mgcv::gam( # using {mgcv}
+  NH4 ~ s(X, Y),      # here come our X/Y/Z data - straightforward enough
+  data = pts_NH4      # specifiy in which object the data is stored
+)
 
-test &lt;- st_as_sf(pts_NH4, coords = c(&quot;X&quot;, &quot;Y&quot;), crs = 25833)
-test2 &lt;- st_as_sf(mutate(grd_template, id = seq(1, nrow(grd_template))), coords = c(&quot;X&quot;, &quot;Y&quot;), crs = 25833)</code></pre>
+# Next we use a couple of functions that have a slightly different modus
+# operandi as they in fact already return interpolated Z values.
+
+# Triangular Irregular Surface
+fit_TIN &lt;- interp::interp( # using {interp}
+  x = pts_NH4$X,           # the function actually accepts coordinate vectors
+  y = pts_NH4$Y,
+  z = pts_NH4$NH4,
+  xo = grd_template$X,     # here we already define the target grid
+  yo = grd_template$Y,
+  output = &quot;points&quot;
+) %&gt;% bind_cols()
+
+# Automatized Kriging  
+fit_KRIG &lt;- automap::autoKrige(      # using {automap}
+  formula = NH4 ~ 1,                 # The interface is similar to {gstat} but
+  input_data = as(sf_NH4, &quot;Spatial&quot;) # {automap} makes a lot of assumptions for you
+) %&gt;% 
+  .$krige_output %&gt;%  # the function returns a complex object with lot&#39;s of metainfo
+  as.data.frame() %&gt;% # we keep only the data we are interested in
+  dplyr::select(X = x1, Y = x2, Z = var1.pred) </code></pre>
+<pre><code>## [using ordinary kriging]</code></pre>
+</div>
+<div id="interpolate" class="section level3">
+<h3>Interpolate!</h3>
+<p>By now, everything should be in place. We have data with our measured information, we have specified the precise coordinates for which new information is to be calculated and we have defined the spatial correlation within our data. Now we only need to tell R to make the final connection. But of course, there are again a couple of ways to do that, depending on the interface and object structure of the package that provides the interpolation algorithm.</p>
+<div id="case-1-we-already-have-it" class="section level4">
+<h4>Case 1: We already have it</h4>
+<p>Some packages just skip the two-step-approach described in the prior chapter and right away provide you with X, Y and interpolated Z values. Among the algorithms used in the chunk above, this is the case for <code>interp::interp()</code> and <code>automap::autoKrige()</code>. We can just rasterize their output.</p>
+<pre class="r"><code># Triangular Irregular Surface
+interp_TIN &lt;- raster::rasterFromXYZ(fit_TIN, crs = crs_raster_format)
+
+# Automatized Kriging
+interp_KRIG &lt;- raster::rasterFromXYZ(fit_KRIG, crs = crs_raster_format)
+
+# Note that you can inspect the result of your interpolation anytime with a 
+# simple `plot()`, if it is a {raster*} object
+plot(interp_KRIG)</code></pre>
+<p><img src="/post/2020-05-21-guide_to_spatial_interp/index_files/figure-html/rasterize_case1-1.png" width="672" /></p>
+</div>
+<div id="case-2-using-rasterinterpolate" class="section level4">
+<h4>Case 2: Using <code>raster::interpolate</code></h4>
+<p>Most geospatial interpolation algorithms will return a model object and if you are not really into statistics and R in general, those will appear mostly useless, as printing them reveals little that would seem of interest to a layperson.</p>
+<pre class="r"><code>print(fit_TPS)</code></pre>
+<pre><code>## Call:
+## fields::Tps(x = as.matrix(pts_NH4[, c(&quot;X&quot;, &quot;Y&quot;)]), Y = pts_NH4$NH4, 
+##     miles = FALSE)
+##                                                
+##  Number of Observations:                64     
+##  Number of parameters in the null space 3      
+##  Parameters for fixed spatial drift     3      
+##  Model degrees of freedom:              50.4   
+##  Residual degrees of freedom:           13.6   
+##  GCV estimate for sigma:                8.145  
+##  MLE for sigma:                         6.015  
+##  MLE for rho:                           2279000
+##  lambda                                 1.6e-05
+##  User supplied rho                      NA     
+##  User supplied sigma^2                  NA     
+## Summary of estimates: 
+##                  lambda      trA      GCV      shat -lnLike Prof converge
+## GCV        1.587428e-05 50.44717 313.2434  8.144528     284.9669        8
+## GCV.model            NA       NA       NA        NA           NA       NA
+## GCV.one    1.587428e-05 50.44717 313.2434  8.144528           NA        8
+## RMSE                 NA       NA       NA        NA           NA       NA
+## pure error           NA       NA       NA        NA           NA       NA
+## REML       4.336959e-03 13.00953 335.2979 16.344436     265.3901        6</code></pre>
+<p>The upside is that many R functions are specifically build around the conventions defined for model objects, so you do not really have to worry why things work, because they usually just do work, as long as you remember were to insert which object. We will take advantage of this and just plug all our remaining model objects, those that do not yet hold any interpolated values at our target grid, into the <code>raster::interpolate</code> function and have it take care of all the rest.</p>
+<pre class="r"><code># Nearest Neighbor
+interp_NN &lt;- interpolate(grd_template_raster, fit_NN)</code></pre>
+<pre><code>## [inverse distance weighted interpolation]</code></pre>
+<pre class="r"><code># Inverse Distance Weighting
+interp_IDW &lt;- interpolate(grd_template_raster, fit_IDW)</code></pre>
+<pre><code>## [inverse distance weighted interpolation]</code></pre>
+<pre class="r"><code># Thin Plate Spline Regression
+interp_TPS &lt;- interpolate(grd_template_raster, fit_TPS)</code></pre>
+</div>
+<div id="case-3-using-statspredict" class="section level4">
+<h4>Case 3: Using <code>stats::predict</code></h4>
+<p>So this is probably R’s “official” way for interpolating new values from a model fit. It should work with all model objects as every contributor who has her/his package create a model object probably has this function in mind. <code>raster::interpolate</code> on the other hand seems not to be working with spatial GAMs. But by falling back on the lower-level <code>stats::predict</code> we can make it work with just a little more effort</p>
+<pre class="r"><code># Generalized Additive Model
+interp_GAM &lt;- grd_template %&gt;% 
+  mutate(Z = predict(fit_GAM, .)) %&gt;% 
+  rasterFromXYZ(crs = crs_raster_format)</code></pre>
+</div>
+</div>
+<div id="visualization-conclusion-further-reading" class="section level3">
+<h3>Visualization, conclusion, further reading</h3>
+<p>Now that we have interpolated rasters, we should visualize them an have a look!</p>
+<pre class="r"><code>plot_my_rasters &lt;- function(raster_object, raster_name){
+  
+  df &lt;- rasterToPoints(raster_object) %&gt;% as_tibble()
+  colnames(df) &lt;- c(&quot;X&quot;, &quot;Y&quot;, &quot;Z&quot;)
+  
+  ggplot(df, aes(x = X, y = Y, fill = Z)) +
+    geom_raster() +
+    ggtitle(label = raster_name) +
+    scale_fill_viridis(option = &quot;C&quot;) +
+    theme_bw() +
+    theme(
+      axis.text = element_blank(),
+      axis.title = element_blank(),
+      axis.ticks = element_blank()
+    )
+}
+
+rasterlist &lt;- list(
+    &quot;Nearest Neighbor&quot; = interp_NN, 
+    &quot;Inverse Distance Weighted&quot; = interp_IDW, 
+    &quot;Kriging&quot; = interp_KRIG, 
+    &quot;Thin Plate Spline Regression&quot; = interp_TPS,
+    &quot;Triangular Irregular Surface&quot; = interp_TIN, 
+    &quot;Generalized Additive Model&quot; = interp_GAM
+  )
+
+plotlist &lt;- map2(
+  rasterlist,
+  names(rasterlist),
+  plot_my_rasters
+)
+
+# Note that the next trick only works because of library(patchwork)
+(plotlist[[1]] + plotlist[[2]]) /
+  (plotlist[[3]] + plotlist[[4]]) /
+  (plotlist[[5]] + plotlist[[6]])</code></pre>
+<p><img src="/post/2020-05-21-guide_to_spatial_interp/index_files/figure-html/viz-1.png" width="672" />
+As you can see, the result strongly depends on the algorithm that was used for the interpolation. This is somewhat overemphasized in the plot above, because for this tutorial I did not attempt at all to fine tune the different interpolation algorithms. In a real project in either science or engineering, one would have to put a lot of thought into model parameterization and carefully evaluate the natural situation and the mathematical implications. But this is stuff for another day’s blogpost. If you want to learn more, here are a couple of ressources you could check out:</p>
+<ul>
+<li>The company Goldensoft that sells the commercial interpolation software surfer has <a href="https://support.goldensoftware.com/hc/en-us/articles/231348728-A-Basic-Understanding-of-Surfer-Gridding-Methods-Part-1">on its website</a> a nice overview for many of the methods I used in this blogpost that can serve as a starting point</li>
+<li><a href="https://github.com/NCAR/fields/blob/master/fieldsVignette.pdf">The vignette of {fields}</a> provides a more in depth dive into the intricate details of spatial interpolation with R</li>
+<li><a href="https://twitter.com/noamross">Noam Ross</a> has created an <a href="https://noamross.github.io/gams-in-r-course/">excellent online course on (spatial) Generalized Additive Models</a> that will get you from zero to hero in no time.</li>
+<li>Check out <a href="https://cran.r-project.org/web/packages/gstat/vignettes/gstat.pdf">{gstat}’s vignettes</a> for more details on how to get more control ybout Kriging.</li>
+</ul>
+</div>
