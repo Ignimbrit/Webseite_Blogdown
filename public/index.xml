@@ -77,6 +77,4665 @@
     </item>
     
     <item>
+      <title>Ionic Charge Balance - a functional approach</title>
+      <link>/post/icbe/</link>
+      <pubDate>Sat, 11 Jul 2020 00:00:00 +0000</pubDate>
+      <guid>/post/icbe/</guid>
+      <description>
+&lt;script src=&#34;/rmarkdown-libs/kePrint/kePrint.js&#34;&gt;&lt;/script&gt;
+
+
+&lt;p&gt;When working with water chemistry you are often presented with analytic results either send to you by a lab or probably even measured by yourself. From that analysis (usually from several) you are then supposed to draw insight about what is going on in your river/pond/aquifer. In order to be able to do that, it is mandatory that you can rely on your data. After all, any conclusion drawn from a dataset can never be better than the data itself.&lt;/p&gt;
+&lt;p&gt;In water chemistry, it is a good custom to check the plausibility of incoming analyses and one fundamental tool to do that is the determination of the ionic charge balance error (ICBE). In Germany, where I happen to live and work, the ICBE, by convention apparently stemming from “Deutscher Verband für Wasserwirtschaft und Kulturbau e.V. (DVWA) Heft 128/92” (though nobody seems to be able to dig up the original reference any more), is calculated using the following formula:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;formula_ger.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;That formula comes with a convention on how to interpret the results:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;if the sum of anions and cations both are &amp;lt;= 2 meq/l, an ICBE &amp;lt;= 5% is acceptable&lt;/li&gt;
+&lt;li&gt;if that sum is higher for either cations or anions, an ICBE &amp;lt;= 2% is acceptable&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;It is worth mentioning that Germany has since 1992 followed kind of their own path on this. The international standard formula comes without the factor “0.5” in the denominator. I don’t know whether the same limits on what an acceptable charge balance error is apply.&lt;/p&gt;
+&lt;p&gt;Anyway, the formula to calculate the ICBE looks straightforward enough, so it should be no problem to apply it to your water data, right? Alas, there are again a couple of catches. I already mentioned, that one might have to modify the formula, depending on whether you work in a German or an international setting. Also, sometimes you might need to know the exact ICBE, while on other occasions it would be more handy to just get a quick feedback on whether your analysis passes the test or not. Luckily, the &lt;a href=&#34;https://www.r-project.org/&#34;&gt;R&lt;/a&gt; functional approach to programming allows us to tackle all this disambiguity with reusable and flexible code snippets.&lt;/p&gt;
+&lt;p&gt;Lastly, for people new to water chemistry (and we all have at some point been there), getting your analysis into that formula can be challenging itself. What is an anion, what is a cation? And which anions and cations do I need to have measured to make a meaningful ICBE?. What does that strange unit meq/l refer to? I would like to discuss these issues at length here, too, as many explanations on the topic I found online again seemed to cover only parts of the whole story.&lt;/p&gt;
+&lt;p&gt;Let’s start by getting us some water analyses!&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)     # Data wrangling and plotting
+library(PeriodicTable) # Look up element properties
+library(kableExtra)    # Table output formatting
+
+# You can download the dataset for this tutorial from Github.
+# It is a random sample of 100 Groundwater measurements
+# made in the German state of North Rhine-Westphalia in 2018.
+
+# The original dataset is published under the following licence:
+# Datenlizenz Deutschland 2.0
+# https://www.govdata.de/dl-de/by-2-0
+# OpenHygrisC_gw-messstellen-messwerte_EPSG25832_CSV.zip
+# https://www.opengeodata.nrw.de/produkte/umwelt_klima/wasser/hygrisc/
+
+raw &amp;lt;- read_csv(
+  &amp;quot;https://raw.githubusercontent.com/Ignimbrit/exchange/master/data/2020/HygrisC_GWsample.csv&amp;quot;
+  ) %&amp;gt;% 
+  select(-Lizenz)
+
+# All Concentrations in `raw` are given in mg/l
+kable(raw) %&amp;gt;% 
+  kable_styling() %&amp;gt;% 
+  scroll_box(width = &amp;quot;700px&amp;quot;, height = &amp;quot;400px&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;div style=&#34;border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:400px; overflow-x: scroll; width:700px; &#34;&gt;
+&lt;table class=&#34;table&#34; style=&#34;margin-left: auto; margin-right: auto;&#34;&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+well_no
+&lt;/th&gt;
+&lt;th style=&#34;text-align:left;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+date
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Na
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+K
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Mg
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Ca
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Mn
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Fe
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+HCO3
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+NO3
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+NH4
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+PO4
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+SO4
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Cl
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+73564217
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-15
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+42.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.30
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+160.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+406.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27.00470
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+81.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100150287
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-24
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.3000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+272.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.86400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+82.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+52.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+80302555
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-03
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+72.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.3100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.035
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+146.09100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+32.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+80302180
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-22
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+17.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.2000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.180
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+42.49920
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+60.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+32.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110250035
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+54.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.50
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+200.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0250
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.024
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+460.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06462
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+91.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+99580020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-25
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+91.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0066
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.025
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+221.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.85400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04616
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+49.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.3
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10407194
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.77
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0068
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.29670
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.8
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.9
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+129660255
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.66
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+30.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.64050
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03692
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110040260
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-29
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.90
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0500
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.300
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+383.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.15456
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59540515
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-04
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+31.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+53.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0022
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+128.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.12496
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.15456
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.08923
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+68.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+45.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+289194611
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-03-14
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+55.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+85.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0060
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.030
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+255.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+31.00002
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06154
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+97.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+63.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+70284118
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-13
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+38.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+43.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.098
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+112.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.28100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.11077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+54.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+33.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+80200758
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-13
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+15.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.90
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+31.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0340
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+57.55100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.30912
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03692
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+57.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+25.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+70276110
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+340.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+39.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0420
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+744.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.82260
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.10304
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.33847
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+140.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+290.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+76866713
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+48.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+19.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+190.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+530.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.06750
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+70.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+97.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110210086
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-04
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+52.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.70
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0940
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.360
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+412.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.20608
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+43.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+66.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110070173
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.70
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+33.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.3000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+62.000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+101.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.19320
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+86.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59540837
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-02-13
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+140.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.80
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+42.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+306.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.82260
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+64.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+85.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+73727088
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-02-23
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0036
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+34.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.73940
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.8
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10409087
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+37.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+86.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.1200
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+334.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.02040
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+30.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110250126
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+24.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.70
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+180.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0240
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.240
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+458.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.18032
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+92.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+91.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110220894
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-16
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.80
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+98.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0390
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.040
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+184.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.59372
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+71.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+46.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21000086
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-15
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+30.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.50
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+95.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.3500
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.800
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+194.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.64400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+76.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+50.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100702119
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-24
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0200
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.040
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+272.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+28.00002
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04015
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+85.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+41.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+98120402
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+140.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.1100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+539.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.18240
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04616
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+19.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+219480618
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-17
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+44.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.60
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+146.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0050
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+162.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+65.00000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06154
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+140.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+149.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100706940
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.8
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+216.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.4800
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.410
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+456.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.99999
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.29954
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.79282
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+240.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+33.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+94120341
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-26
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+160.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0098
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+340.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+35.41600
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09016
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+57.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+32.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+94140273
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-25
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.50
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.1200
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.028
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.37237
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+33.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+73561915
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-31
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+28.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.70
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+150.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+363.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+34.53060
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+53.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100750059
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-16
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+75.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.50
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+38.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+264.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.00000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.20071
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+91.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+210.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+76811311
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-25
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.60
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+79.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.83830
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110060106
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-27
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+42.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0320
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+39.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+66.40500
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06462
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+35.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+38.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26531124
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-24
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0680
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.040
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+288.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+48.69700
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+52.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110200214
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+37.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0940
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.310
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+31.87440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.30912
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+64.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+56.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26540216
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-15
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+82.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.1700
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.700
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+347.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.56672
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03385
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+129660188
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-27
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.83
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+19.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.036
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+345.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+30.10360
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+17.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26504595
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-23
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+103.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+316.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+33.00001
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04015
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+58.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10203199
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-23
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+24.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+83.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+203.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+44.27000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.08308
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+50.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+41.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26500012
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-01-25
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0070
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+271.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.60910
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.1
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+80303328
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-29
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.0000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.041
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+356.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.75510
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.29624
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+65.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+37.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21150023
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-24
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.87
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.3800
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.600
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+215.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.27048
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+44.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+33.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59130441
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-25
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+76.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+170.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+513.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+41.17110
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.28308
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+37.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+279481317
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-27
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+51.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+25.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+191.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0050
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.040
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+327.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+72.99999
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09231
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+127.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+161.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10301574
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-27
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+65.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0021
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.039
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.21820
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+93.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+36.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+106530033
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-28
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.60
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+150.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0084
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.180
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+293.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+88.54000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+68.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+28.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100700536
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-26
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+34.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.4400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+33.100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+65.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.99999
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.54915
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.91685
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+66.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+53.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+106530021
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-28
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.70
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+150.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0110
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.420
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+322.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+123.95600
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+46.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+36.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+70134212
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-13
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+77.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.90
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+98.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.091
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+325.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27.44740
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06769
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+99.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+106502062
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-18
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+36.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0500
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.600
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+105.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.00002
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04015
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+91112000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.80
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.1600
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.300
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+367.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.05616
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+92.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100761161
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-03-22
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.60
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+128.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0300
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.030
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+380.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.00002
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04015
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10410053
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-25
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.55
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+44.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+80.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+380.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+28.33280
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+73311716
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-26
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.30
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+352.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.11930
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+46.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+73512618
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-08
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+45.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.30
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+170.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.035
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+383.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+53.12400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+150.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110200354
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-02
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.4000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+346.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.83720
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+52.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+60220855
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-16
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+320.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+38.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0034
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.260
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+677.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.87584
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03385
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+93.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+150.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16003998
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-01-30
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.8
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+180.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+371.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.36420
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.15077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110200445
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-21
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.2900
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.037
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+294.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+86.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+91140602
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-16
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+15.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+190.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.2700
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.410
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+523.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.02857
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+40.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+56.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26540514
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-23
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.30
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+85.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0150
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+128.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+88.54000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+113109477
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-16
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0590
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.510
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+281.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+31.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10202201
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-03-15
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+40.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.70
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+36.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0160
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.330
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+77.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.24960
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+84.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+36.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26541117
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-17
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+15.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+75.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.1700
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.800
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+116.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+43.82730
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+62.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+70200518
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-02
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+170.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.64050
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100706680
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+61.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.80
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+162.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.1500
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.310
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+354.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.99999
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04015
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+135.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+119.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10201117
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-03-15
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+150.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+265.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+61.97800
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04616
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+66.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110151094
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-26
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+39.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+15.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.1400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.071
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+363.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.69552
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+76.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110060179
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-09-03
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+81.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0027
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+287.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+41.17110
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+72.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+96.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10410077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-03
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+220.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.90
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+65.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.5000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+811.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.23184
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110200251
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-03
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.70
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+53.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0210
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.036
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+61.97800
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+70.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+99780082
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-01
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.025
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+133.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.06750
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+54.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+30.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26541154
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-17
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+15.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+97.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.8200
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.066
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+225.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.02040
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+55.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+19.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+40304024
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+19.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+70.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+48.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+97.39400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.36924
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+99.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+33.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100706617
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-11-21
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+19.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.90
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+135.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.7400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.800
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+319.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.00002
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.17971
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.22077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+101.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+41.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100140920
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-26
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+220.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.2400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+300.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.20608
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+35.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+70156116
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-19
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+51.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.80
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+34.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.4500
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+269.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.81507
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.20608
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+250.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+49.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+219971614
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.83
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+173.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0050
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+346.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+77.00001
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06154
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+111.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+85.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+106506043
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-04
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+29.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+65.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+244.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.99999
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04015
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+79.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100140750
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-18
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+160.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.1000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+18.000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+274.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.29624
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+88.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+290.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+70157110
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+57.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+361.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.46310
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+83.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+91153300
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-31
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+14.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+190.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0760
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+464.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.19780
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.93871
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+40.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26490997
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-03-14
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+4.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+116.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.2670
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.630
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+231.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27.60000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.13979
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03009
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+65.8
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+52.5
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+94190173
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-17
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+160.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+292.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+37.62950
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04616
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+180.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59130726
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+19.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+140.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.7000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.300
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+422.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.14632
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+76.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+28.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59620213
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-04
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.95
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+61.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+158.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+15.05180
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+40.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.6
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+80303237
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-09
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+5.50
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+86.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0044
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.040
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+183.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+53.12400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.08616
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+62.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10201415
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-07
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+17.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+129.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0050
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.040
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+230.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+92.00001
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.12308
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+97.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+50.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59621280
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-16
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+55.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+19.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+150.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0200
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+242.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+15.05180
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+150.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110240133
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-05-30
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.50
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+68.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0170
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.029
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+173.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.62480
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.27048
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.11385
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+17.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.5
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+26503153
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-03-15
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.50
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+38.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+132.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+368.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.00002
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04015
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+163.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+20103074
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-12-17
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+36.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+97.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+83.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.6600
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+223.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+27.45000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.50000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.71000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+66.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+73746710
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-06-20
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+51.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.90
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+316.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.02040
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+68.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+78.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+80303183
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-11-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.40
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+12.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+90.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.020
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+63.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+106.24800
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09846
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+48.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110050010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-11
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+34.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+9.60
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+69.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0240
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.400
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+64.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.19320
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04923
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+130.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+50.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59130570
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-07-23
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+100.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.80
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+28.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+120.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0090
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.500
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+640.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.32810
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+3.22000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+47.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+44.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+106502463
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-04-25
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.80
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+23.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+51.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+171.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+22.00002
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04015
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+62.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+106506031
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-10-18
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+11.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.90
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+28.7
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+63.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0100
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+277.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.00002
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.09985
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.04015
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+52.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+24.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+110070057
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-08-06
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+13.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+16.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+6.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+71.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0021
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.051
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+90.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+119.52900
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.38465
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+43.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+19.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+76809407
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+2018-02-26
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+21.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1.10
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+10.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+47.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.0049
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.048
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+97.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+7.96860
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.06440
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+0.03077
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+8.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+82.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;p&gt;&lt;b&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;In its current form, that table is not easy to work with in R. We need a simple way to apply transformations to all measurements at once. It is therefore better to organize the data in columns, so we can readily push them into tidyverse functions. Also we need to know which elements we actually deal with.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df_base &amp;lt;- raw %&amp;gt;% 
+  pivot_longer(Na:Cl, names_to = &amp;quot;Param&amp;quot;, values_to = &amp;quot;mg/l&amp;quot;)
+
+# Check which ions were analyzed in the dataset
+df_base$Param %&amp;gt;% unique() %&amp;gt;% paste0(collapse = &amp;quot;, &amp;quot;) %&amp;gt;% cat()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Na, K, Mg, Ca, Mn, Fe, HCO3, NO3, NH4, PO4, SO4, Cl&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So we have actually quite a broad inventory of elements and molecules here. All of those can, and if they are available they should, go into your ICBE calculation. However, in many contexts it might already be possible to obtain good results when only Na, K, Mg, Ca, HCO3, SO4 &amp;amp; Cl are available, as they often constitute the bulk of dissolved ions in natural waters.&lt;/p&gt;
+&lt;p&gt;In order to derive gainful insight about our measurements of those parameters, though, we need to have additional knowledge about their chemical properties.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# The mass of an ion can be acquired from {PeriodicTable} function `mass`
+# The charge, unfortunately, you *have to know*. Explaining this basic concept
+# of aqueous chemistry is a bit beyond the scope of this blog post.
+df_specs &amp;lt;- tribble(
+  ~Param, ~charge, ~`mass [g/mole]`,
+    &amp;quot;Na&amp;quot;,      1L,   mass(&amp;quot;Na&amp;quot;),
+     &amp;quot;K&amp;quot;,      1L,   mass(&amp;quot;K&amp;quot;),
+    &amp;quot;Mg&amp;quot;,      2L,   mass(&amp;quot;Mg&amp;quot;),
+    &amp;quot;Ca&amp;quot;,      2L,   mass(&amp;quot;Ca&amp;quot;),
+    &amp;quot;Mn&amp;quot;,      2L,   mass(&amp;quot;Mn&amp;quot;),
+    &amp;quot;Fe&amp;quot;,      2L,   mass(&amp;quot;Fe&amp;quot;),
+  &amp;quot;HCO3&amp;quot;,     -1L,   mass(&amp;quot;H&amp;quot;) + 1*mass(&amp;quot;C&amp;quot;) + 3*mass(&amp;quot;O&amp;quot;),
+   &amp;quot;NO3&amp;quot;,     -1L,   mass(&amp;quot;N&amp;quot;) + 3*mass(&amp;quot;O&amp;quot;),
+   &amp;quot;NH4&amp;quot;,      1L,   mass(&amp;quot;N&amp;quot;) + 4*mass(&amp;quot;H&amp;quot;),
+   &amp;quot;PO4&amp;quot;,     -3L,   mass(&amp;quot;P&amp;quot;) + 4*mass(&amp;quot;O&amp;quot;),
+   &amp;quot;SO4&amp;quot;,     -2L,   mass(&amp;quot;S&amp;quot;) + 4*mass(&amp;quot;O&amp;quot;),
+    &amp;quot;Cl&amp;quot;,     -1L,   mass(&amp;quot;Cl&amp;quot;)
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now that we do have our analyses and know the properties of the ions we are dealing with, we can transform the concentrations that we’ve been given in mg/l (milligram per liter) into meq/l (millimole equivalent per liter), the unit that goes into the ICBE formula. mg/l refers to the mass of a substance (e.g. chloride) solved in a liquid (water, in this case). That much is easy to understand. But what is mole and what does mole equivalent mean?.&lt;/p&gt;
+&lt;p&gt;While the unit mg (1/1000 g) refers to the mass of the substance, mole refers to its amount, the very number of atomic particles of a certain kind. As different kinds of particles, say Na and Cl, have different masses, weighing in the same amount of Na and Cl with a balance will provide you with a different number of particles. One mole is short hand for 6.02214076×10^23 particles, just like a dozen is short hand for 12.&lt;/p&gt;
+&lt;p&gt;To go from a mass in g to an amount of particles in mole you need to know the molar mass of an element or molecule. The molar mass for every element can be read from any decent &lt;a href=&#34;https://en.wikipedia.org/wiki/Periodic_table&#34;&gt;periodic table&lt;/a&gt; or called in R directly with &lt;code&gt;PeriodicTable::mass()&lt;/code&gt;. It comes in g/mole, so if you divide your substance mass in g by the element’s molar mass, the g will cancel out and you end up with your substance amount in mole.&lt;/p&gt;
+&lt;p&gt;Why is it important to know how many particles exactly you have? Because as we are dealing with ions here, every particle comes with a charge and we need to add up those numbers. And this is where the transition from “mole” to “mole equivalent” comes in. All ions are charged. But some ions are more charged than others. As we are trying to ultimately calculate a charge balance here, we will eventually have to multiply the amount of particles we have with the amount of charge that is assigned to the individual particles.&lt;/p&gt;
+&lt;p&gt;That was a lot of text that probably simultaneously bored the people with a chemical background and confused those without. Therefore now let’s jump back to the code and look at how to actually perform the described unit conversion.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df_mole &amp;lt;- df_base %&amp;gt;% 
+  left_join( # First I&amp;#39;ll attach the ion properties to my concentrations
+    df_specs, by = &amp;quot;Param&amp;quot;
+  ) %&amp;gt;% 
+  mutate(    # Next let&amp;#39;s add a column specifying whether charge is + or -
+    iontype = case_when(
+      charge &amp;gt; 0 ~ &amp;quot;Cation&amp;quot;,
+      charge &amp;lt; 0 ~ &amp;quot;Anion&amp;quot;
+    )
+  ) %&amp;gt;% 
+  mutate(    # Here is the actual unit conversion, as explicit as possible
+    `g/l`     = `mg/l`    / 1000,
+    `mole/l`  = `g/l`     / `mass [g/mole]`,
+    `mmole/l` = `mole/l`  * 1000,
+    `meq/l`   = `mmole/l` * abs(charge) # number of particle times their charge
+  )
+
+# Now that we have the correct unit, all we need to do is sum up
+# our anions and cations.
+df_Ionsum &amp;lt;- df_mole %&amp;gt;% 
+  group_by(well_no, date, iontype) %&amp;gt;% 
+  summarise(ionsum = sum(`meq/l`)) %&amp;gt;% 
+  ungroup() %&amp;gt;% 
+  pivot_wider(names_from = iontype, values_from = ionsum)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;With our analytic data in the right shape and unit, we can go ahead and write a function that takes the sum of anions and cations and calculates the ICBE.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;ionic_charge_error &amp;lt;- function(
+  sum_cations, sum_anions, 
+  absolute = TRUE,         # differentiate between positive &amp;amp; negative error?
+  mode = &amp;quot;GER&amp;quot;,            # which calculation scheme to use?
+  logical = FALSE,         # return only whether test was passed?
+  discard_threshold = &amp;quot;default&amp;quot;  # How much error is too much?
+){
+  
+  # Should the result be a positive number only (the default)?
+  if(absolute == TRUE){
+    numerator &amp;lt;- abs(sum_cations-sum_anions)
+  } else {
+    numerator &amp;lt;- sum_cations-sum_anions
+  }
+  
+  # Use the deviant German calculation scheme?
+  if(mode == &amp;quot;GER&amp;quot;){
+    denominator &amp;lt;- (sum_cations+sum_anions)*0.5
+  } else if(mode == &amp;quot;INT&amp;quot;){
+    denominator &amp;lt;- (sum_cations+sum_anions)
+  } else {
+    stop(&amp;quot;mode not supported&amp;quot;)
+  }
+  
+  # Calculate the actual charge balance
+  ionic_charge_error &amp;lt;- numerator/denominator*100
+  
+  # Sometimes you do only care whether the charge error is acceptable or not
+  if(logical == TRUE){
+    
+    if(discard_threshold == &amp;quot;default&amp;quot;){
+      # This is another (probably German?) convention
+      if(any(c(sum_anions, sum_cations) &amp;gt; 2)){limit &amp;lt;- 2L} else {limit &amp;lt;- 5L}
+    } else {
+      # Alternatively, You can just supply your own, personal threshold
+      limit &amp;lt;- discard_threshold
+    }
+    
+    if(ionic_charge_error &amp;gt; limit){
+      FALSE
+    } else {
+      TRUE
+    }
+  } else {
+    ionic_charge_error
+  }
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;As you can see, an R function allows a lot of flexibility for advanced users while, by setting reasonable defaults, still remains easily applicable even for people not familiar with every detail of the underlying concept.&lt;/p&gt;
+&lt;p&gt;Finally, we can now have a look at the quality of those water analyses I dug up.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;df_icbe &amp;lt;- df_Ionsum %&amp;gt;% 
+  mutate( # I&amp;#39;ll try both modes of the function: numeric and logical
+    charge_error = map2_dbl(Cation, Anion, ionic_charge_error),
+    keep = map2_lgl(Cation, Anion, ionic_charge_error, logical = TRUE)
+  )
+
+# The result is a large data.frame with lot&amp;#39;s of values.  
+# To get a better understanding of the results, a plot can help.
+
+ggplot(
+  data = df_icbe %&amp;gt;% 
+    mutate(
+      `acceptable error` = map2_chr(
+        Anion, Cation, function(x, y){
+          if(any(c(x, y) &amp;gt; 2)){&amp;quot;2%&amp;quot;} else {&amp;quot;5%&amp;quot;}
+        }
+      ) 
+    ),
+  mapping = aes(
+    x = charge_error,
+    fill = `acceptable error`
+  )
+) +
+  geom_histogram(
+    binwidth = 1, color = &amp;quot;black&amp;quot;, boundary = 0
+  ) +
+  geom_vline(
+    aes(
+      xintercept = parse_number(`acceptable error`),
+      color = `acceptable error`
+      ),
+    size = 2
+    ) +
+  scale_fill_manual(values = c(&amp;quot;firebrick&amp;quot;, &amp;quot;steelblue&amp;quot;)) +
+  scale_color_manual(values = c(&amp;quot;red&amp;quot;, &amp;quot;blue&amp;quot;)) +
+  scale_x_continuous(breaks = seq(0, 50, 2)) +
+  scale_y_continuous(breaks = seq(0, 20, 2)) +
+  labs(
+    title = &amp;quot;Calculated Ionic Charge Balance Error&amp;quot;,
+    subtitle = &amp;quot;100 groundwater samples collected 2018 in North Rhine-Westphalia, Germany&amp;quot;,
+    x = &amp;quot;charge balance error in percent&amp;quot;
+  ) +
+  theme_bw() +
+  theme(
+    axis.text = element_text(size = 11, color = &amp;quot;black&amp;quot;),
+    axis.title = element_text(size = 12, color = &amp;quot;black&amp;quot;),
+    legend.text = element_text(size = 11, color = &amp;quot;black&amp;quot;),
+    legend.title = element_text(size = 12, color = &amp;quot;black&amp;quot;),
+    legend.position = &amp;quot;bottom&amp;quot;,
+    legend.direction = &amp;quot;horizontal&amp;quot;
+  )&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2020-07-11-IONcharge/index_files/figure-html/demonstration-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;As you can see, the vast majority of analyzed samples (97 in 100) come with a rather high mineralization, leading to either cationsum or anionsum being &amp;gt; 2 meq/l. Only 28 out of 100 samples end up having an acceptable charge balance. Reasons for this can be manifold and range from bad sampling over laboratory issues to the presence of organic contaminants that might skew your charge balance. Either way, if your dataset has a charge balance rate that looks like the one in the histogram above, you should probably talk to your sampler.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
       <title>A practical guide to geospatial interpolation with R</title>
       <link>/post/spatial_interpolation/</link>
       <pubDate>Thu, 21 May 2020 00:00:00 +0000</pubDate>
@@ -84,7 +4743,7 @@
       <description>
 
 
-&lt;p&gt;One of the most exciting things you can to with R is geospatial interpolation. This means that you have some kind of information (e.g. measurements of, say, soil temperature) for a limited number of locations and then you apply a mathematical model that will provide you with an educated guess of what your result might look like, if you would have measured at every possible location. The practical advantage is clear. Sampling is expensive and therefore always limited. This is especially true in the geosciences, where sampling might require hundreds of thousands of Euros for drilling deep holes to the formation of your interest.&lt;/p&gt;
+&lt;p&gt;One of the most exciting things you can do with R is geospatial interpolation. This means that you have some kind of information (e.g. measurements of, say, soil temperature) for a limited number of locations and then you apply a mathematical model that will provide you with an educated guess of what your result might look like, if you would have measured at every possible location. The practical advantage is clear. Sampling is expensive and therefore always limited. This is especially true in the geosciences, where sampling might require hundreds of thousands of Euros for drilling deep holes to the formation of your interest.&lt;/p&gt;
 &lt;p&gt;Doing your geospatial interpolation in R is a great opportunity. Many software tools often associated with that task are commercial products that can become fairly expensive, so it is pretty common that if one finishes university or changes a job position, all the work spend on learning that tool is rendered void. R on the other hand is always free and offers a wide range of algorithms of all kinds of flavors. An additional bonus is the seamless integration with the powerful data transformation and visualization capabilities of the language.&lt;/p&gt;
 &lt;p&gt;A problem when using R (especially at the beginning) is, that the user interface for the application of different algorithms on the many available data structures varies wildly. Although improvements clearly have been made in the recent years, there is little standardization and every package author basically comes up with their own philosophy on how to handle input/output.&lt;/p&gt;
 &lt;p&gt;As a consequence, starting with geospatial interpolation in R can be frustrating. Of course you can (and will have to) dig through the documentation of the various packages, but as interpolation models are a fairly advanced topic of statistics, those tend to be heavy on technical slang.&lt;/p&gt;
@@ -225,13 +4884,16 @@ crs_raster_format &amp;lt;- &amp;quot;+proj=utm +zone=33 +ellps=GRS80 +towgs84=0
 grd_template_raster &amp;lt;- grd_template %&amp;gt;% 
   dplyr::mutate(Z = 0) %&amp;gt;% 
   raster::rasterFromXYZ( 
-    crs = crs_raster_format)
-
-# Let&amp;#39;s also carry with us the raster from the alternative approach
+    crs = crs_raster_format)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning in showSRID(uprojargs, format = &amp;quot;PROJ&amp;quot;, multiline = &amp;quot;NO&amp;quot;): Discarded datum Unknown based on GRS80 ellipsoid in CRS definition,
+##  but +towgs84= values preserved&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Let&amp;#39;s also carry with us the raster from the alternative approach
 alt_grd_template_raster &amp;lt;- alt_grd_template_sf %&amp;gt;% 
   raster::rasterFromXYZ(
      crs = crs_raster_format
   )&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning in showSRID(uprojargs, format = &amp;quot;PROJ&amp;quot;, multiline = &amp;quot;NO&amp;quot;): Discarded datum Unknown based on GRS80 ellipsoid in CRS definition,
+##  but +towgs84= values preserved&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;step-2-fit-a-model&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;Step 2: Fit a model&lt;/h3&gt;
@@ -298,12 +4960,14 @@ fit_KRIG &amp;lt;- automap::autoKrige(      # using {automap}
 &lt;h4&gt;Case 1: We already have it&lt;/h4&gt;
 &lt;p&gt;Some packages just skip the two-step-approach described in the prior chapter and right away provide you with X, Y and interpolated Z values. Among the algorithms used in the chunk above, this is the case for &lt;code&gt;interp::interp()&lt;/code&gt; and &lt;code&gt;automap::autoKrige()&lt;/code&gt;. We can just rasterize their output.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Triangular Irregular Surface
-interp_TIN &amp;lt;- raster::rasterFromXYZ(fit_TIN, crs = crs_raster_format)
-
-# Automatized Kriging
-interp_KRIG &amp;lt;- raster::rasterFromXYZ(fit_KRIG, crs = crs_raster_format)
-
-# Note that you can inspect the result of your interpolation anytime with a 
+interp_TIN &amp;lt;- raster::rasterFromXYZ(fit_TIN, crs = crs_raster_format)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning in showSRID(uprojargs, format = &amp;quot;PROJ&amp;quot;, multiline = &amp;quot;NO&amp;quot;): Discarded datum Unknown based on GRS80 ellipsoid in CRS definition,
+##  but +towgs84= values preserved&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Automatized Kriging
+interp_KRIG &amp;lt;- raster::rasterFromXYZ(fit_KRIG, crs = crs_raster_format)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning in showSRID(uprojargs, format = &amp;quot;PROJ&amp;quot;, multiline = &amp;quot;NO&amp;quot;): Discarded datum Unknown based on GRS80 ellipsoid in CRS definition,
+##  but +towgs84= values preserved&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Note that you can inspect the result of your interpolation anytime with a 
 # simple `plot()`, if it is a {raster*} object
 plot(interp_KRIG)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/2020-05-21-guide_to_spatial_interp/index_files/figure-html/rasterize_case1-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
@@ -352,6 +5016,8 @@ interp_TPS &amp;lt;- interpolate(grd_template_raster, fit_TPS)&lt;/code&gt;&lt;/
 interp_GAM &amp;lt;- grd_template %&amp;gt;% 
   mutate(Z = predict(fit_GAM, .)) %&amp;gt;% 
   rasterFromXYZ(crs = crs_raster_format)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning in showSRID(uprojargs, format = &amp;quot;PROJ&amp;quot;, multiline = &amp;quot;NO&amp;quot;): Discarded datum Unknown based on GRS80 ellipsoid in CRS definition,
+##  but +towgs84= values preserved&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div id=&#34;visualization-conclusion-further-reading&#34; class=&#34;section level3&#34;&gt;

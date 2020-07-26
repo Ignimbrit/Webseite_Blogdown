@@ -28,12 +28,17 @@
   </url>
   
   <url>
-    <loc>/post/spatial_interpolation/</loc>
-    <lastmod>2020-06-06T18:09:20+02:00</lastmod>
+    <loc>/post/icbe/</loc>
+    <lastmod>2020-07-27T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/post/</loc>
+    <lastmod>2020-07-27T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/spatial_interpolation/</loc>
     <lastmod>2020-06-06T18:09:20+02:00</lastmod>
   </url>
   
