@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-Back in June I wrote [a post](https://swilke-geoscience.net/post/spatial_interpolation/) about the basics of geospatial interpolation in R that, according to Twitter, resonated with a lot of people. It appears that there is a need for detailed tutorials on how to apply geospatial algorithms to real world data (at least in R). That is very understandable, as R is a very powerful and popular tool for spatial analysis, yet the package ecosystem for geospatial interpolation is exceptionally convoluted by today's standards.
+Back in June I wrote [a post](https://swilke-geoscience.net/post/spatial_interpolation/) about the basics of geospatial interpolation in R that, according to Twitter, resonated with a lot of people. It appears that there is a need for detailed tutorials on how to apply geospatial algorithms to real world data (at least in R). That is very understandable, as R is a very powerful and popular tool for spatial analysis, yet the package ecosystem for geospatial interpolation is exceptionally convoluted by todays standards.
   
   I therefore decided to follow up on the June-post and take another look on the applicability of R to very practical problems in the world of geospatial interpolation.
   
