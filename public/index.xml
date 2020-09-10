@@ -84,12 +84,12 @@
       <description>
 
 
-&lt;p&gt;Back in June I wrote &lt;a href=&#34;https://swilke-geoscience.net/post/spatial_interpolation/&#34;&gt;a post&lt;/a&gt; about the basics of geospatial interpolation in R that, according to twitter, resonated with a lot of people. It appears that there is a need for detailed tutorials on how to apply geospatial algorithms to real world data (at least in R). That is very understandable, as R is a very powerful and popular tool for spatial analysis, yet the package ecosystem for spatial interpolation is exceptionally convoluted by today’s standards.&lt;/p&gt;
+&lt;p&gt;Back in June I wrote &lt;a href=&#34;https://swilke-geoscience.net/post/spatial_interpolation/&#34;&gt;a post&lt;/a&gt; about the basics of geospatial interpolation in R that, according to Twitter, resonated with a lot of people. It appears that there is a need for detailed tutorials on how to apply geospatial algorithms to real world data (at least in R). That is very understandable, as R is a very powerful and popular tool for spatial analysis, yet the package ecosystem for geospatial interpolation is exceptionally convoluted by today’s standards.&lt;/p&gt;
 &lt;p&gt;I therefore decided to follow up on the June-post and take another look on the applicability of R to very practical problems in the world of geospatial interpolation.&lt;/p&gt;
-&lt;p&gt;One of the most famous and popular algorithms for geospatial interpolation is &lt;a href=&#34;https://en.wikipedia.org/wiki/Kriging&#34;&gt;Kriging&lt;/a&gt; and the standard package to realize Kriging in R is &lt;code&gt;gstat&lt;/code&gt;. In my blogpost from June I included Kriging as one of the methods presented there but took a massive short cut to realize the actual computation by using the &lt;code&gt;automap&lt;/code&gt; package, that can sort all the intricate &lt;code&gt;gstat&lt;/code&gt;-details for you, at the price of handing over all the control to the machine.&lt;/p&gt;
-&lt;p&gt;The reason I used that short cut back then is that taking control by using &lt;code&gt;gstat&lt;/code&gt; directly is hard. So hard in fact, that this post here, that I originally intended to be a more or less comprehensive tour through the &lt;code&gt;gstat&lt;/code&gt;-universe will now focus mainly on funneling your data in and out &lt;code&gt;gstat&lt;/code&gt;. A more detailed account on the statistic backgrounds and certain aspects of model optimization will have to wait for another day.&lt;/p&gt;
+&lt;p&gt;One of the most famous and popular algorithms for geospatial interpolation is &lt;a href=&#34;https://en.wikipedia.org/wiki/Kriging&#34;&gt;Kriging&lt;/a&gt; and the standard package to realize Kriging in R is &lt;code&gt;gstat&lt;/code&gt;. In my blogpost from June I included Kriging as one of the methods presented there but took a massive short cut to carry out the actual computation by using the &lt;code&gt;automap&lt;/code&gt; package, that can sort out all the intricate &lt;code&gt;gstat&lt;/code&gt;-details for you, at the price of handing over all the control to the machine.&lt;/p&gt;
+&lt;p&gt;The reason I used that short cut back then is that taking control by using &lt;code&gt;gstat&lt;/code&gt; directly is hard. So hard in fact, that this post here, that I originally intended to be a more or less comprehensive tour through the &lt;code&gt;gstat&lt;/code&gt;-universe, will now focus mainly on funneling your data in and out &lt;code&gt;gstat&lt;/code&gt;, just to make Kriging work. A more detailed account on the statistical backgrounds and certain aspects of model optimization will have to wait for another day.&lt;/p&gt;
 &lt;p&gt;I suppose the main reason why working with &lt;code&gt;gstat&lt;/code&gt; these days is so difficult is because that package is a true R veteran. It is older than the tidyverse and the code base dates back to 1993. The interface is probably very different from anything you are used to work with.&lt;/p&gt;
-&lt;p&gt;For handling spatial data, &lt;code&gt;gstat&lt;/code&gt; relies on the &lt;code&gt;sp&lt;/code&gt; package which itself has been since superseded mostly by package &lt;a href=&#34;https://r-spatial.github.io/sf/index.html&#34;&gt;sf&lt;/a&gt; today, which is much more convenient. Yet here we are and &lt;code&gt;gstat&lt;/code&gt; is still very much THE place to go if you want to do Kriging. So there is no point in further complaining and let’s see how we can make it work for any given dataset.&lt;/p&gt;
+&lt;p&gt;For handling spatial data, &lt;code&gt;gstat&lt;/code&gt; relies on the &lt;code&gt;sp&lt;/code&gt; package which itself has since been superseded mostly by package &lt;a href=&#34;https://r-spatial.github.io/sf/index.html&#34;&gt;sf&lt;/a&gt; today, which is much more convenient. Yet here we are and &lt;code&gt;gstat&lt;/code&gt; is still very much THE place to go if you want to do Kriging. So there is no point in further complaining and let’s see how we can make it work for any given dataset.&lt;/p&gt;
 &lt;div id=&#34;setup&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Setup&lt;/h2&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# We will need some packages for (spatial) data processing
@@ -106,7 +106,7 @@ library(automap) # Automatize some (or all) parts of the gstat-workflow
 library(patchwork)
 library(viridis)
 
-# Download the data for this tutorial from Github
+# Download the data for this tutorial from Github!
 # The data for this tutorial is derived from a dataset published here
 # https://www.opengeodata.nrw.de/produkte/umwelt_klima/wasser/flurabstandskarte_1988/
 # licence information:
@@ -133,7 +133,7 @@ head(grd_100_df)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;The data for this tutorial is a xyz-file giving us the height of the groundwater table in some part of the German state of North Rhine-Westphalia in 1988. We can convert the data that we just read as a &lt;code&gt;tibble&lt;/code&gt; into a &lt;code&gt;RasterLayer&lt;/code&gt; and have a look.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;grd_100_rstr &amp;lt;- raster::rasterFromXYZ(
   grd_100_df, 
-  res = c(100, 100), 
+  res = c(100, 100), # resolution in meter (see crs)
   crs = &amp;quot;+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs&amp;quot;
     )
 
@@ -160,28 +160,31 @@ wellobs_sf &amp;lt;- st_as_sf(wellobs, coords = c(&amp;quot;X&amp;quot;, &amp;qu
 &lt;/div&gt;
 &lt;div id=&#34;creating-a-variogram&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Creating a Variogram&lt;/h2&gt;
-&lt;p&gt;In order to make Kriging work you need to supply a &lt;a href=&#34;https://en.wikipedia.org/wiki/Variogram&#34;&gt;variogram&lt;/a&gt;, which is essentially a function describing the relationship between distance and “Z” in your point data. I do not want to go into to much detail here, as “working with variograms” and “working with variograms in gstat” is enough material for two more blogposts. We will therefore rush a bit through this. First let’s create an empirical variogram, giving us the actual distribution of spatial dependencies observed in the data.&lt;/p&gt;
+&lt;p&gt;In order to make Kriging work you need to supply a &lt;a href=&#34;https://en.wikipedia.org/wiki/Variogram&#34;&gt;variogram&lt;/a&gt;, which is essentially a function describing the relationship between distance and “Z” in your point data. I do not want to go into too much detail here, as “what are variograms” and “working with variograms in gstat” is enough material for two more blogposts. We will therefore rush a bit through this. First let’s create an empirical variogram, giving us the actual distribution of spatial dependencies observed in the data.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# We will discuss later, what Z~1 does actually mean in this context
-v_emp_OK &amp;lt;- gstat::variogram(Z~1, as(wellobs_sf, &amp;quot;Spatial&amp;quot;))
+v_emp_OK &amp;lt;- gstat::variogram(
+  Z~1,
+  as(wellobs_sf, &amp;quot;Spatial&amp;quot;) # switch from {sf} to {sp}
+  )
 
 plot(v_emp_OK)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/2020-09-10-kriging_with_R/2020-09-09-kriging-with-r-exploring-gstat_files/figure-html/VariEmp-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;Note that I switched from &lt;code&gt;sf&lt;/code&gt; to &lt;code&gt;sp&lt;/code&gt; classes in my call to &lt;code&gt;variogram&lt;/code&gt; in order to make sure &lt;code&gt;gstat&lt;/code&gt; understands what is going on. In fact, by now some support for &lt;code&gt;sf&lt;/code&gt; has been included to &lt;code&gt;gstat&lt;/code&gt; but my impression is that this support is fairly limited and should not be relied upon.&lt;/p&gt;
+&lt;p&gt;Note that I switched from &lt;code&gt;sf&lt;/code&gt; to &lt;code&gt;sp&lt;/code&gt; classes in my call to &lt;code&gt;variogram&lt;/code&gt; in order to make sure &lt;code&gt;gstat&lt;/code&gt; understands what is going on. In fact, by now, some support for &lt;code&gt;sf&lt;/code&gt; has been included in &lt;code&gt;gstat&lt;/code&gt; but my impression is that this support is fairly limited and should not be relied upon.&lt;/p&gt;
 &lt;p&gt;Now that we have an empirical variogram, we need to fit a mathematical function so we can inter-/extrapolate. At this point we will take another short cut and have &lt;code&gt;automap&lt;/code&gt; do the work for us, because variogram modeling is not the topic of the day.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# automaps autofitVariogram actually produces more info than we need.
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# automap&amp;#39;s autofitVariogram actually produces more info than we need.
 # I will only keep the var_model part.
 v_mod_OK &amp;lt;- automap::autofitVariogram(Z~1, as(wellobs_sf, &amp;quot;Spatial&amp;quot;))$var_model
 
 # To inspect the automatic fit that was chosen for us we can use
-# automaps excellent build in methods for base::plot
+# automap&amp;#39;s excellent build in methods for base::plot
 plot(automap::autofitVariogram(Z~1, as(wellobs_sf, &amp;quot;Spatial&amp;quot;)))&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/2020-09-10-kriging_with_R/2020-09-09-kriging-with-r-exploring-gstat_files/figure-html/VariFit-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;automap&lt;/code&gt; has determined the optimal variogram model (as far as &lt;code&gt;automap&lt;/code&gt; is concerned) for us and we can feed it into the Kriging algorithm. In this case, the function has determined that a “Stein’s parameterization” model with the parameters listed in the plot are the best fit. Other models that could be used to control the shape of the fitted curves are spherical (“Sph”), exponential (“Exp”), gaussian (“Gau”) and Matern (“Mat”).&lt;/p&gt;
-&lt;p&gt;Note that this variogram implicitly assumes isotropic conditions, which means the semi-variance is the same regardless in which direction you look. This is not necessarily true (in fact, it probably isn’t) and we could dive deeper into this by inspecting several variograms for different directions. This can be achieved by providing an &lt;code&gt;alpha&lt;/code&gt;argument in the call to &lt;code&gt;autofitVariogram&lt;/code&gt; (or some of the many &lt;code&gt;gstat&lt;/code&gt; functions related to that topic). For the sake of brevity, I will not do that now and just assume spatial isotropy.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;automap&lt;/code&gt; has determined the optimal variogram model (as far as &lt;code&gt;automap&lt;/code&gt; is concerned) for us and we can feed it into the Kriging algorithm. In this case, the function has determined that a “Stein’s parameterization” model with the parameters listed in the plot are the best fit. Other models that could be used to control the shape of the fitted curves are spherical (“Sph”), exponential (“Exp”), gaussian (“Gau”) and Matern (“Mat”). It is alternatively possible to specify all or some parameters in the call to &lt;code&gt;autofitVariogram&lt;/code&gt; and &lt;code&gt;automap&lt;/code&gt; will only optimize one the arguments we leave unspecified.&lt;/p&gt;
+&lt;p&gt;Note that the variogram above implicitly assumes isotropic conditions, which means the semi-variance is the same regardless in which direction you look. This is not necessarily true (in fact, it probably isn’t) and we could dive deeper into this by inspecting several variograms for different directions (north, east, …). This can be achieved by providing an &lt;code&gt;alpha&lt;/code&gt; argument in the call to &lt;code&gt;autofitVariogram&lt;/code&gt; (or some of the many &lt;code&gt;gstat&lt;/code&gt; functions related to that topic). For the sake of brevity, I will not do that now and just assume spatial isotropy.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;defining-a-target-grid&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Defining a target grid&lt;/h2&gt;
-&lt;p&gt;As explained in &lt;a href=&#34;https://swilke-geoscience.net/post/spatial_interpolation/&#34;&gt;my last blogpost on spatial interpolation&lt;/a&gt;, many interpolation methods expect you to provide them with a target set of coordinates (“X”, “Y”) for which the modeled variable (“Z”) ist to be interpolated. Usually that means coming up with some kind of “empty” grid or raster. This holds true for Krigin with &lt;code&gt;gstat&lt;/code&gt;, too, except everything is a little bit more complicated, because we need to do it in &lt;code&gt;sp&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;As explained in &lt;a href=&#34;https://swilke-geoscience.net/post/spatial_interpolation/&#34;&gt;my last blogpost on spatial interpolation&lt;/a&gt;, many interpolation methods expect you to provide them with a target set of coordinates (“X”, “Y”) for which the modeled variable (“Z”) ist to be interpolated. Usually that means coming up with some kind of “empty” grid or raster. This holds true for Kriging with &lt;code&gt;gstat&lt;/code&gt;, too, except everything is a little bit more complicated, because we need to do it in &lt;code&gt;sp&lt;/code&gt;.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# technically we already have a grid from the initial dataset, but as we are 
 # still working under the pretense that our only available data are the 
 # simulated observation wells, we will construct our grid from that object.
@@ -200,12 +203,16 @@ grd_100_sf &amp;lt;- wellobs_sf %&amp;gt;%
 # Step 2: making our grid work for gstat
 grd_100_sp &amp;lt;- as(grd_100_sf, &amp;quot;Spatial&amp;quot;) # converting to {sp} format
 gridded(grd_100_sp) &amp;lt;- TRUE             # informing the object that it is a grid
-grd_100_sp &amp;lt;- as(grd_100_sp, &amp;quot;SpatialPixels&amp;quot;) # specifying what kind of grid&lt;/code&gt;&lt;/pre&gt;
+grd_100_sp &amp;lt;- as(grd_100_sp, &amp;quot;SpatialPixels&amp;quot;) # specifying what kind of grid
+
+# That second step there is based on a discussion I found on Stackoverflow
+# https://stackoverflow.com/questions/43436466/create-grid-in-r-for-kriging-in-gstat&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;As you can see, making practical grids is surprisingly verbose, given how common it is to need one when dealing with spatial operations in R in general. Somebody should probably write a package to address this issue.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;kriging&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Kriging&lt;/h2&gt;
-&lt;p&gt;Kriging comes in several flavours. I will focus here on three rather common and basic variants: “Ordinary”, “Simple”, and “Universal” Kriging. What’s the difference between those three? Simple Kriging assumes that the mean in your target area (your grid template (also known as “the random field”)) is constant and known to you. Local variability is just that: a deviation from the norm which is to be accounted for.&lt;/p&gt;
+&lt;p&gt;Kriging comes in several flavours. I will focus here on three rather common and basic variants: “Ordinary”, “Simple”, and “Universal” Kriging. What’s the difference between those three?&lt;/p&gt;
+&lt;p&gt;Simple Kriging assumes that the mean in your target area (your grid template (also known as “the random field”)) is constant and known to you. Local variability is just that: a deviation from the norm which is to be accounted for.&lt;/p&gt;
 &lt;p&gt;Ordinary Kriging is almost the same, just this time you do not know the value of the mean.&lt;/p&gt;
 &lt;p&gt;For Universal Kriging now you do not longer have a level plane with some bumps in it, but instead you are dealing with a tilted or even curved surface (still with bumps in it).&lt;/p&gt;
 &lt;p&gt;In &lt;code&gt;gstat&lt;/code&gt;, the main way to differentiate between different kinds of Kriging (or any of the implemented algorithms) is controlled by the formula supplied. We have already seen that syntax when fitting the variogram. The best way to explain this is probably by looking at examples.&lt;/p&gt;
@@ -227,13 +234,12 @@ SK &amp;lt;- krige(
   )&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## [using simple kriging]&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Universal Kriging
-# This method is now implemented somewhat different, we no longer assume that
-# Z is essentially depending on a single mean but rather on the position of
-# the interpolation location within our target grid
-
+# Implementing this method is somewhat different.
+# we no longer assume that Z is essentially depending on a single mean but
+# rather on the position of the interpolation location within our target grid
 UK &amp;lt;- krige(
   Z~coords.x1+coords.x2, # Think &amp;quot;Z~X+Y&amp;quot; but {sp} conversion alters variable naming
-  as(wellobs_sf, &amp;quot;Spatial&amp;quot;), # input data in {sp} format (X --&amp;gt; coords.x1)
+  as(wellobs_sf, &amp;quot;Spatial&amp;quot;), # input data in {sp} format (`X` --&amp;gt; `coords.x1`)
   grd_100_sp,                # locations to interpolate at
   model = autofitVariogram(  # we need an appropriate variogram fit
     Z~X+Y,                   # here we can keep &amp;quot;X+Y&amp;quot; - it&amp;#39;s just how it is
@@ -241,17 +247,16 @@ UK &amp;lt;- krige(
     )$var_model
   )&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## [using universal kriging]&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Ill also add an Inverse distance weighted model to provide a baseline
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# I&amp;#39;ll also add an inverse distance weighted model to provide a baseline
 # for model evaluation
-
+# Note how the only difference to Ordinary Kriging is the absence of a
+# fitted variogram model
 idwres &amp;lt;- idw(
   Z~1,                       # idw also depends on mean
   as(wellobs_sf, &amp;quot;Spatial&amp;quot;), # input data in {sp} format
   grd_100_sp,                # locations to interpolate at
 ) &lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## [inverse distance weighted interpolation]&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Note how the only difference to Ordinary Kriging is the absence of a
-# fitted variogram model&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;As you can see, Universal Kriging is a bit more difficult to realize than the other two. But these difficulties mostly arise from the fact that we need to switch between &lt;code&gt;sf&lt;/code&gt; and &lt;code&gt;sp&lt;/code&gt; objects and loose our variable names on the way. One could avoid that by working in &lt;code&gt;sp&lt;/code&gt; only, but then making a grid template and overall working with our spatial point information would become really inconvenient. I do not recommend.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;inspect-the-results&#34; class=&#34;section level2&#34;&gt;
@@ -293,11 +298,24 @@ p_wellobs &amp;lt;- ggplot(
     )
 
 # This works because of library(patchwork)
-
 (p_orig + p_wellobs + p_idw) / 
   (p_SK + p_OK + p_UK) + 
   plot_layout(guides = &amp;#39;collect&amp;#39;)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/2020-09-10-kriging_with_R/2020-09-09-kriging-with-r-exploring-gstat_files/figure-html/PlotMiscSetup-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;From the plot alone it is not obvious that the different Kriging methods did actually produce different results. We can, however, take a look at the summary statistics and we will see that the three different approaches did indeed yield (subtly) different results.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;map(list(SK, OK, UK), raster) %&amp;gt;% 
+  map(summary) %&amp;gt;%
+  do.call(&amp;quot;cbind&amp;quot;, .) %&amp;gt;% 
+  as.data.frame() %&amp;gt;% 
+  setNames(c(&amp;quot;SK&amp;quot;, &amp;quot;OK&amp;quot;, &amp;quot;UK&amp;quot;))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##               SK       OK       UK
+## Min.    54.39102 54.32669 54.32087
+## 1st Qu. 68.90548 68.89596 68.90859
+## Median  73.02403 73.00607 73.01139
+## 3rd Qu. 78.59243 78.57769 78.57435
+## Max.    97.83050 97.83246 97.83256
+## NA&amp;#39;s     0.00000  0.00000  0.00000&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Anyway, this is how you can make Kriging in &lt;code&gt;gstat&lt;/code&gt; work for any dataset. If you have a nice example to show where the three different Kriging approaches yield visibly different results, please feel free to contact me (you could &lt;a href=&#34;https://twitter.com/SorenWilke&#34;&gt;write me a Twitter DM&lt;/a&gt;) - I’d love to see that.&lt;/p&gt;
 &lt;/div&gt;
 </description>
     </item>
