@@ -73,7 +73,7 @@ Bekanntwerden von Rechtsverletzungen werden wir derartige Inhalte umgehend entfe
 Quelle:
 [eRecht24](https://www.e-recht24.de/)
 
-## Nutzung von Computercode
+## **Nutzung von Computercode**
 
 Der auf dieser Webseite veröffentlichte Programmcode steht unter der MIT-Lizenz. Es gelten die folgenden Bedingungen:
 
