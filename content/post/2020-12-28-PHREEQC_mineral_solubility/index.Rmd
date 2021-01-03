@@ -1,7 +1,7 @@
 ---
-title: Hydrochemical modeling of mineral solubility with PHREEQC in R
+title: Modeling the solubility of minerals in water with PHREEQC from R
 author: ~
-date: '2020-12-28'
+date: '2021-01-03'
 slug: PHREEQC-mineral-solubility
 categories: []
 tags: []
@@ -15,18 +15,24 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
-draft: true
+draft: false
 
 ---
-When working with contaminated groundwater, complex interactions between different solutes and sometimes the aquifer geology itself can lead to a plethora of reactions, potentially creating additional or even completely new problems, when it comes to remediation. In these cases it is often not sufficient to collect samples and analyze them in a lab. Maybe the anticipated effect will take place in the future and you would like to know more about it in advance. Maybe the number or quality of available samples is insufficient, either because access to the site is difficult or funding is limited. Maybe you are planning to interfere with the current (chemical) state of the aquifer and need to quantify the expected effects, probably by checking quite a number of different scenarios, searching for an optimal solution (sometimes literally).
+<b></b>
   
-  These are some examples of when hydrochemical modeling can be applied to great effect. There are a couple of different software solutions available for this task, but I will focus on [PHREEQC](https://www.usgs.gov/software/phreeqc-version-3) here, because it has a couple of distinct advantages. It is:
+### Preface
+  
+When working with contaminated groundwater, complex interactions between different solutes and sometimes the aquifer geology itself can lead to a plethora of reactions, potentially creating additional or even completely new problems, when it comes to remediation. 
+  
+  In these cases it is often not sufficient to collect samples and analyze them in a lab. Maybe the anticipated effect will take place in the future and you would like to know more about it in advance. Maybe the number or quality of available samples is insufficient, either because access to the site is difficult or funding is limited. Maybe you are planning to interfere with the current (chemical) state of the aquifer and need to quantify the expected effects, probably by checking quite a number of different scenarios, searching for an optimal solution (sometimes literally). These are some examples of when hydrochemical modeling can be applied to great effect.
+  
+  There are a couple of different software solutions available for this task, but I will focus on [PHREEQC](https://www.usgs.gov/software/phreeqc-version-3) here, because it has a couple of distinct advantages. It is:
   
 1. free
 2. well [documented](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3.htm)
 3. fully compatible with [R](https://www.r-project.org/)
 
-  The last point is particularly important, because PHREEQC is a script based program, were you describe your hydrochemical system with keywords. The input to PHREEQC is a textfile that can be loaded into R as a string an subsequently manipulated. This means we can make use of R's excellent capacities for iterative calculations to e.g. create thousands (or more) of PHREEQC-simulations in an instant, running different scenarios or systematically varying different input parameters. 
+  The last point is particularly important, because PHREEQC is a script based program, were you describe your hydrochemical system with keywords. The input to PHREEQC is a text file that can be loaded into R as a string an subsequently manipulated. This means we can make use of R's excellent capacities for iterative calculations to e.g. create thousands (or more) of PHREEQC-simulations in an instant, running different scenarios or systematically varying different input parameters. 
   
   R can "talk" to PHREEQC via the [{phreeqc} package](https://cran.r-project.org/web/packages/phreeqc/index.html), but using that package directly is cumbersome as it mostly just sends textstrings from the one program to the other and back again. Fortunately, the [{tidyphreeqc} package](https://github.com/paleolimbot/tidyphreeqc) by [Dr. Dunnington](https://twitter.com/paleolimbot) provides a tidy interface to translate R-code into text strings that can be interpreted by PHREEQC.
 
@@ -38,18 +44,20 @@ knitr::opts_chunk$set(
 ```
 
 ```{r installations, eval=FALSE}
-# {tidyphreeqc} is available from github only. You will also need {chemr} to
+# {tidyphreeqc} is available from github only. We will also need {chemr} to
 # get access to some additional data structures
 
-# install.packages("remotes")
-# remotes::install_github("paleolimbot/chemr")
-# remotes::install_github("paleolimbot/tidyphreeqc")
+install.packages("remotes")
+remotes::install_github("paleolimbot/chemr")
+remotes::install_github("paleolimbot/tidyphreeqc")
 
 ```
   
+<b></b>
+  
 ### Experiment 1: dissolution of halite at standard conditions
 
-  Once the two github packages are successfully installed, we can set up our R session for modeling and have a look around. For this tutorial I would like to explore ways to model mineral solubility. Let's start with something simple and dissolve some [halite](https://en.wikipedia.org/wiki/Halite), famously known as table salt.
+  Once the two github packages are successfully installed, we can set up our R session for modeling and have a look around. For this tutorial, I would like to explore ways to model mineral solubility. Let's start with something simple and dissolve some [halite](https://en.wikipedia.org/wiki/Halite), famously known as table salt.
 
 ```{r setup}
 library(tidyverse)     # Data wrangling and plotting
@@ -69,7 +77,7 @@ ex1_solution <- phr_input_section(
   name = "water, deionized",
   components = list(
     "pH" = 7, "pe" = 4, "temp" = 25, "redox" = "pe", "units" = "mmol/kgw",
-    "density" = 1, "-water" = 1 # kg
+    "density" = 1, "-water" = 1 # kg --> the mass of the water we will use
   )
 )
 
@@ -77,7 +85,7 @@ print(ex1_solution)
 
 ```
 
-  As seen in the chunk above `phr_input_section` has four arguments. `type` refers to the PHREEQC command we would like to use to declare what kind of material we are defining here. For an aqueous solution (which in this case includes deionized water, even though it does not (yet) contain any solutes) we need the [`SOLUTION`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-48.htm#50593793_30253) command. The `number` is a numeric identifier used to refer to a specific [`SOLUTION`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-48.htm#50593793_30253) during (more complex) calculations. `name` is basically just a human readable comment, meant to inform the reader of a script about the intent behind or role of a specific `phr_input_section`. Finally `components` is a list of arguments that is specific to the `type` of `phr_input_section`. It is used in the chunk above e.g. to define the pH and the temperature of the deionized water.
+  As seen in the chunk above the `phr_input_section` function has four arguments. `type` refers to the [PHREEQC command](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3.htm) we would like to use to declare what kind of material we are defining here. For an aqueous solution (which in this case includes deionized water, even though it does not (yet) contain any solutes) we need the [`SOLUTION`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-48.htm#50593793_30253) command. The `number` is a numeric identifier used to refer to a specific [`SOLUTION`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-48.htm#50593793_30253) during (more complex) calculations. `name` is basically just a human readable comment, meant to inform the reader of a script about the intent behind or role of a specific `phr_input_section`. Finally `components` is a list of arguments that is specific to the `type` of `phr_input_section`. It is used in the chunk above e.g. to define the pH and the temperature of the deionized water.
   
   Now that we have deionized water, we can (virtually) throw some salt in our beaker.
 ```{r AddSalt}
@@ -94,9 +102,9 @@ ex1_eqphase <- phr_input_section(
 )
 ```
 
-  The [`EQUILIBRIUM_PHASES`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-13.htm#50593793_61207) command is PHREEQC's way of saying that this mineral needs to end up in equilibrium with the solution, either by dissolution of precipitation. As we start our model with 1 kg deionized water and ~584 g (= 10 mol) of solid halite, and because the solubility of NaCl in water is ~360 g/l, we can expect some halite (pretty much about 224 g) to escape dissolution.
+  The [`EQUILIBRIUM_PHASES`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-13.htm#50593793_61207) command is PHREEQC's way of saying that this mineral needs to end up in equilibrium with the solution, either by dissolution of precipitation. As we start our model with 1 kg deionized water and ~584 g (= 10 mol) of solid halite, and because [the solubility of NaCl in water](https://gestis.dguv.de/data?name=001330) is ~358 g/l, we can expect some halite to escape dissolution.
   
-  We have now everything we need for the model to run successfully, but before we actually start, there are some final technicalities to be resolved. The most important one is the definition of a [`SELECTED_OUTPUT`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-45.htm#50593793_20239) command. PHREEQC has to solve an enormous amount of equations for every model and it will dutifully report on every little result on it, amounting to a huge tohuwabohu of result-data, most of which we do not need at all. In fact there is fairly little information about the model that we are actually interested in. We would like to know the amount of Na and Cl in the solution, the amount of halite that dissolved and the amount that did not (just to check). 
+  We have now everything we need for the model to run successfully, but before we actually start, there are some final technicalities to be resolved. The most important one is the definition of a [`SELECTED_OUTPUT`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-45.htm#50593793_20239) command. PHREEQC has to solve an enormous amount of equations for every model and it will dutifully report on every little result of them, amounting to a huge tohuwabohu of result-data, most of which we do not need at all. In fact there is fairly little information about the model that we are actually interested in. We would like to know the amount of Na and Cl in the solution, the amount of halite that dissolved and the amount that did not (just to check). 
   
   Fortunately, the [`SELECTED_OUTPUT`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-45.htm#50593793_20239) command allows us to define specific parts of the models result that we are interested in, and {tidyphreeqc} in return will hand us a `data.frame` with the requested information only.
   
@@ -122,7 +130,7 @@ print(ex1)
 
 ```
 
-  This is the final PHREEQC script tidily translated from R. You could copy and paste it into a .txt or a .pqi file and run it in any given instance of PHREEQC. You could also write it to file using the `phr_write_pqi` command. But we do not have to do any of this but instead will send our `ex1` script to PHREEQC and then retrieve the result without ever leaving R.
+  This is the final PHREEQC script tidily translated from R. You could copy and paste it into a .txt or a .pqi file and run it in any given instance of PHREEQC. You could also write it to file using the `phr_write_pqi` command. But we do not have to do any of this but instead will send our `ex1` script directly to PHREEQC and then retrieve the result without ever leaving R.
   
 ```{r ex1RunAndHarvest}
 ex1_result <- phr_run(ex1) %>% # This line does all of the actual heavy lifting
@@ -144,12 +152,13 @@ NaCl_dissolved_g <- ex1_result[["d_Halite"]] %>% # dissolved halite in mol
   
   And that was the first model experiment. According to PHREEQC, `r NaCl_dissolved_g` g of halite have dissolved in the deionized water at 25°C, which is pretty close to what was expected from the [wikipedia entry](https://en.wikipedia.org/wiki/Sodium_chloride).
   
+<b></b>
   
 ### Experiment 2: dissolution of calcite at different levels of CO2(g) and temperature
   
-  Now that we have seen how we can make a single virtual dissolution experiment, the next step is to make a lot of them. For this step we will model the dissolution of [calcite](https://en.wikipedia.org/wiki/Calcite). Calcite is a rock forming mineral with Formula CaCO3. It is important in many contexts, e.g. in marine ecosystems, farming or construction to name just a few (there is much, much more), and so is its dissolution/weathering behavior.
+  Now that we have seen how we can make a single virtual dissolution experiment, the next step is to make a lot of them. For this step we will model the dissolution of [calcite](https://en.wikipedia.org/wiki/Calcite). Calcite is a rock forming mineral with Formula CaCO3. It is important in many contexts, e.g. in marine ecosystems, farming or construction, to name just a few (there is much, much more), and so is its dissolution/weathering behavior.
   
-  Weathering of calcite can be influenced by a lot of factors but I'd like to focus the next model (or virtual experiment) on two specific ones: the CO2-concentration of the air (or any surrounding gas phase) and the temperature. The link between those two parameters and the ongoing climate change is obvious. Between 1950s and 2020 CO2 concentration in the air has risen approximately from 310 [ppm](https://en.wikipedia.org/wiki/Parts-per_notation) to 410 ppm (see the Mauna Loa observatory data [here](https://www.esrl.noaa.gov/gmd/ccgg/trends/mlo.html)). Because CO2, H2O and CaCO3 react to aqueous [calcium bicarbonite](https://en.wikipedia.org/wiki/Calcium_bicarbonate), an increase in available CO2(g) will shift that reactions equilibrium in favor of calcium bicarbonat.
+  Weathering of calcite can be influenced by a lot of factors but I'd like to focus the next model (or virtual experiment) on two specific ones: the CO2-concentration of the air (or any surrounding gas phase) and the temperature. The link between those two parameters and the ongoing climate change is obvious. Between the 1950s and 2020 CO2 concentration in the air has risen approximately from 310 [ppm](https://en.wikipedia.org/wiki/Parts-per_notation) to 410 ppm (see the Mauna Loa observatory data [here](https://www.esrl.noaa.gov/gmd/ccgg/trends/mlo.html)). Because CO2, H2O and CaCO3 react to aqueous [calcium bicarbonite](https://en.wikipedia.org/wiki/Calcium_bicarbonate), an increase in available CO2(g) will shift that reactions equilibrium in favor of calcium bicarbonat.
   
 ```{r ex2setup}
 # Define the variables and step sizes (1 ppm and 5°C)
@@ -163,13 +172,13 @@ ex2_var_grid <- expand_grid(
 ) %>% 
   mutate(ID = seq(1, nrow(.))) # number the combinations
 
-
 # Define a function that takes in a given combination of variables
 # (and an ID number) and returns a PHREEQC model script of that combination.
 # By itself, that single script block is structured fairly similar to
 # experiment 1.
 build_ex2 <- function(CO2, temp, ID){
   
+  # Deionized water
   ex2_solution <- phr_input_section(
     type = "SOLUTION",
     number = ID,
@@ -198,6 +207,7 @@ build_ex2 <- function(CO2, temp, ID){
     )
   )
   
+  # The only info we really need is the dissolved amount of calcite
   ex2_selout <- phr_input_section(
     type = "SELECTED_OUTPUT",
     number = ID,
@@ -218,7 +228,7 @@ build_ex2 <- function(CO2, temp, ID){
   
   As a first option, we could combine the 303 distinct simulations into a single PHREEQC-script, separating each with an [`END`](https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-12.htm#50593793_63178) command to indicate that a new virtual beaker is to be used each time. Then we hand the entire script to PHREEQC, let it do the calculation, and retrieve the combined result. This method has one important drawback: if among our 303 simulations there is a single one that fails numerical convergence, the whole operation crashes and we do not get any result whatsoever.
   
-  Fortunately, there is a second option: We can keep the 303 distinct simulations as 303 scripts and push them from R into PHREEQC one by one. That way we can make use of [R's excellent error handling facilities](https://adv-r.hadley.nz/function-operators.html#safely), and if one of our simulations fails to converge and PHREEQC throws an error, R will shrug it off, leave a note and move on to the next simulation. For our objective in this virtual experiment, this is the better approach imho. So let's see how we can implement that.
+  Fortunately, there is a second option: we can keep the 303 distinct simulations as 303 scripts and push them from R into PHREEQC one by one. That way we can make use of [R's excellent error handling facilities](https://adv-r.hadley.nz/function-operators.html#safely), and if one of our simulations fails to converge and PHREEQC throws an error, R will shrug it off, leave a note and move on to the next simulation. For our objective in this virtual experiment, this is the better approach imho. So let's see how we can implement that.
 
 ```{r ex2Run}
 # Write a function that takes a single combination of variables and
@@ -245,8 +255,7 @@ phr_build_run_and_possibly_retrieve <- possibly(
 
 # Note that in case of a PHREEQC-error, the safe function we just build will 
 # return a tibble with a single column ("state"), that can easily be
-# incorporated with results from successfull model runs via dplyr::bind_rows
-
+# incorporated with results from successful model runs via dplyr::bind_rows
 
 # Now we can actually run all 303 simulations one by one.
 ex2_result <- pmap_dfr(
@@ -305,8 +314,9 @@ ggplot(
 
 ```
   
-  From the plot above we can see that calcite solubility increasing with CO2-concentration while sharply dropping at increased temperatures. Especially the latter might be surprising to someone not familiar with calcite chemistry. After all, in most systems solubility of a solid phase should increase with temperature. Calcite is an interesting special case, as its solubility is dependent on that of CO2-gas in water. As gases are less soluble in water at higher temperatures, the calcite solubility follows that trend.
+  From the plot above we can see that calcite solubility increases with CO2-concentration, while sharply dropping at increased temperatures. Especially the latter might be surprising to someone not familiar with calcite chemistry. After all, in most systems solubility of a solid phase should increase with temperature. Calcite is an interesting special case, as its solubility is dependent on that of CO2-gas in water. As gases are less soluble in water at higher temperatures, the calcite solubility follows that trend.
   
+<b></b>
   
 ### Experiment 3: dissolution of gypsum at varying pe and pH
   
@@ -316,12 +326,12 @@ The solubility of goethite at varying [pH](https://en.wikipedia.org/wiki/PH) and
   
   First we will see how we can construct a mineral solubility model at fixed levels of pe and pH. The catch in this is, that the dissolution of a mineral might alter those parameters in the solution itself. It therefore does not suffice to set initial pH and pe values, as they will be modified during the (PHREEQC-internal) iterative dissolution calculations. Instead, pH and pe must be buffered. That way, whenever the pH/pe of the solution is modified by the reaction, buffer material is added or removed to keep the pe/pH in check. This will go on until equilibrium is achieved.
   
-  There is no build in function in PHREEQC to fix the pe or pH of a solution, but the buffer method is recommended by its developers. The problem is common enough, that `{tidyphreeqc}` provides a couples of dedicated functions to make handling as easy as possible. In a first step, the buffer-reaction is defined to the PHREEQC thermodynamic database, using e.g. `phr_pH_fix_definition`. In a second step, a pseudo-phase is added in an `EQUILIBRIUM_PHASES` command block where the target value (e.g. pH = 7) can be set. This can be done standalone via `phr_pH_fix` or, as shown below, inside an `EQUILIBRIUM_PHASES` command block that also hosts other phases.
+  There is no build in function in PHREEQC to fix the pe or pH of a solution, but the buffer method is recommended by its developers. The problem is common enough, that [{tidyphreeqc}](https://github.com/paleolimbot/tidyphreeqc) provides a couple of dedicated functions to make handling as easy as possible. In a first step, the buffer-reaction is defined to the PHREEQC thermodynamic database, using e.g. `phr_pH_fix_definition`. In a second step, a pseudo-phase is added in an `EQUILIBRIUM_PHASES` command block where the target value (e.g. pH = 7) can be set. This can be done standalone via `phr_pH_fix` or, as shown below, inside an `EQUILIBRIUM_PHASES` command block that also hosts other phases.
 
 ```{r ex3Constructor}
 build_ex3 <- function(pe, pH, ID){
   
-  # Define the existance of pe/pH-locking pseudophases to PHREEQC
+  # Define the existence of pe/pH-locking pseudophases to PHREEQC
   pH_def <- phr_pH_fix_definition()
   pe_def <- phr_pe_fix_definition()
   
@@ -352,7 +362,7 @@ build_ex3 <- function(pe, pH, ID){
       ),
       "Fix_pe" = c(
         pe*(-1),
-        "O2",    # buffering the reduction potentiel with oxygen
+        "O2",    # buffering the reduction potential with oxygen
         1000     # I really, really, really do not want to run out of buffer
       )                     
     )
@@ -375,9 +385,9 @@ build_ex3 <- function(pe, pH, ID){
 
 ```
   
-  Now that we are able to fully control the behavior of our input variables, I would like to introduce another useful concept. In virtual experiment 2 we ended up having 303 unique combinations of input variables that where sequentially send to PHREEQC for the computation. On my machine that takes about 10 seconds, which is not a problem. More complex models however often require many thousands of PHREEQC simulation runs or more. Obviously, this is where computation time quickly becomes an issue.
+  Now that we are able to fully control the behavior of our input variables, I would like to introduce another useful concept. In virtual experiment 2 we ended up having 303 unique combinations of input variables that where sequentially send to PHREEQC for the computation. On my machine that takes about 10 seconds, which is not a problem. More complex models, however, often require many thousands of PHREEQC simulation runs or more. Obviously, this is where computation time quickly becomes an issue.
   
-  Now we cannot optimize PHREEQC's internal computation process like we would try optimizing an R-script, e.g. by rewriting it in C++. PHREEQC already is written in C. We can however modify the way PHREEQC is tasked with handling its tasks. One way could be to use `[{foreach}](https://cran.r-project.org/web/packages/foreach/vignettes/foreach.html)` to harness one's machines multicore-processing abilities, but I have not tried this yet. Instead we will do something a bit more mundane but nonetheless very effective: we will run multiple instances of R (and within that: PHREEQC) and distribute our tasks of computing the solubility for unique combinations of input parameters among them. This can be achieved using `[{furrr}](https://github.com/DavisVaughan/furrr)`
+  Now we cannot optimize PHREEQC's internal computation process like we would try optimizing an R-script, e.g. by rewriting it in C++. PHREEQC already is written in C, to begin with. We can however modify the way PHREEQC is tasked with handling its input. One way could be to use [{foreach}](https://cran.r-project.org/web/packages/foreach/vignettes/foreach.html) to harness one's machines multicore-processing abilities, but I have not tried this yet. Instead we will do something a bit more mundane but nonetheless very effective: we will run multiple instances of R (and within that: PHREEQC) and distribute our tasks of computing the solubility for unique combinations of input parameters among them. This can be achieved using [{furrr}](https://github.com/DavisVaughan/furrr)
   
 ```{r ex3Execution}
 
@@ -421,7 +431,7 @@ ex3_result <- future_pmap_dfr(
   Running the 4816 PHREEQC simulations on my machine takes about 26 seconds with `furrr::future_pmap_dfr` and 113 seconds with `purrr::pmap_dfr`. Let's have a look at the results!
   
 ```{r ex3Plot}
-# This model comes with a lot of failed runs, so its better to start
+# This model comes with a lot of failed runs, so it's better to start
 # from the input tibble and attach the results that be.
 ex3_result_plotable <- ex3_var_grid %>% 
   left_join(ex3_result, by = "ID", suffix = c("_input", "")) %>% 
@@ -429,14 +439,12 @@ ex3_result_plotable <- ex3_var_grid %>%
     success = pmap_lgl(
       list(pe, pe_input, pH, pH_input),
       function(pe, pe_input, pH, pH_input){
-        
         # if pH or pe are missing, it was obviously not successful.
         if(!all(!is.na(pe), !is.na(pe_input), !is.na(pH), !is.na(pH_input))){
           FALSE
         } else {
-          
           # if input pH and final PHREEQC pH are not equal
-          # (maybe we run out of buffer), the simulation also failed.
+          # (maybe we ran out of buffer), the simulation also failed.
           all(
             near(pe, pe_input, 0.1),
             near(pH, pH_input, 0.1)
@@ -498,7 +506,15 @@ ggplot(
   
   As we can see, solubility of goethite increases when pH or pe decrease. That's not surprising, but maybe one could have expected that the effect of pe on an iron bearing mineral would be somewhat stronger.
   
+<b></b>
+  
 ### Further reading
   
-  to do.
+  If you would like to learn more about `{tidypreeqc}` and its applications, you should check out [this blogpost by Dr. Dunnington](https://fishandwhistle.net/post/2018/pourbaix-ish-diagrams-using-phreeqc-and-r/) (the creator of `{tidypreeqc}`), where he demonstrates modeling of aqueous species.
+  
+  If you are new to PHREEQC, it might be helpful to start modeling with a graphical user interface. There are three available from the [USGS homepage](https://www.usgs.gov/software/phreeqc-version-3/). I am quite happy with "PHREEQC interactive" and still use it a lot to get an overview over the different command arguments or to validate input files. There used to be a user forum for PHREEQC but unfortunately it seems to be defunct for now. 
+  
+  It is possible to link PHREEQC to a 3D groundwater flow modeling engine to carry out complex reactive transport modeling. The most popular example to my knowledge is the [USGS's PHAST](https://www.usgs.gov/software/phast-a-computer-program-simulating-groundwater-flow-solute-transport-and-multicomponent), but there are also plugins available for Feflow and Hydrus3D.
+  
+  If you are more of a Python person, there is a package called [phreeqpy](https://www.phreeqpy.com/index.html) available which might come more naturally to you, alas I have not tried it myself.
 
