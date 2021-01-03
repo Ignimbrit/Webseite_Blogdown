@@ -318,7 +318,7 @@ ggplot(
   
 <b></b>
   
-### Experiment 3: dissolution of gypsum at varying pe and pH
+### Experiment 3: dissolution of goethite at varying pe and pH
   
 The solubility of goethite at varying [pH](https://en.wikipedia.org/wiki/PH) and [pe](https://en.wikipedia.org/wiki/Reduction_potential) values shall serve as an example for our next iteration of the dissolution modeling problem. Goethite is a common mineral in many soils of the temperate climate zones, where it serves e.g. as an adsorption surface for trace elements. Its dissolution, especially if induced by some major event of anthropogenic interference, can alter the productivity of arable land. 
   

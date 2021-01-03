@@ -1,51 +1,51 @@
-SOLUTION_RAW                 1196 water, deionized
+SOLUTION_RAW                 584 water, deionized
   -temp                      10
   -pressure                  1
   -potential                 0
-  -total_h                   111.0125934737
-  -total_o                   55.506216696289
-  -cb                        0.00016008112629573
-  -density                   0.9996994802943
+  -total_h                   111.01245861303
+  -total_o                   55.506216696388
+  -cb                        2.5220151624609e-05
+  -density                   0.99969934439488
   -totals
-    H(0)                     1.6570066796686e-13
-  -pH                        3.8
-  -pe                        1.2
-  -mu                        8.0040581897652e-05
-  -ah2o                      0.99999727862021
+    H(0)                     1.0455167673969e-10
+  -pH                        4.6
+  -pe                        -1
+  -mu                        1.2610193346575e-05
+  -ah2o                      0.99999957125254
   -mass_water                1
-  -soln_vol                  1.0003007714556
-  -total_alkalinity          -0.00016008112629573
+  -soln_vol                  1.0003007714579
+  -total_alkalinity          -2.5220151624609e-05
   -activities
-    E                        -1.2
-    H(0)                     -13.081697732469
-    O(0)                     -71.31392086313
+    E                        1
+    H(0)                     -10.281697734531
+    O(0)                     -76.913918874442
   -gammas
-EQUILIBRIUM_PHASES_RAW       1196 Goethite and fixed pe and pH
+EQUILIBRIUM_PHASES_RAW       584 Goethite and fixed pe and pH
   # EXCHANGE_MODIFY candidates; use new_def=true #
   -new_def                   0
   -component                 Fix_pH
       # EQUILIBRIUM_PHASES_MODIFY candidate identifiers #
       -add_formula           H+
-      -si                    -3.8
+      -si                    -4.6
       -moles                 1000
       -force_equality        0
       -dissolve_only         0
       -precipitate_only      0
       # PPassemblage workspace variables #
-      -si_org                -3.8
+      -si_org                -4.6
       -delta                 0
       -initial_moles         0
       -totals                
   -component                 Fix_pe
       # EQUILIBRIUM_PHASES_MODIFY candidate identifiers #
       -add_formula           O2
-      -si                    -1.2
+      -si                    1
       -moles                 1000
       -force_equality        0
       -dissolve_only         0
       -precipitate_only      0
       # PPassemblage workspace variables #
-      -si_org                -1.2
+      -si_org                1
       -delta                 0
       -initial_moles         0
       -totals                
