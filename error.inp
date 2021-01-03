@@ -1,0 +1,69 @@
+SOLUTION_RAW                 4761 water, deionized
+  -temp                      10
+  -pressure                  1
+  -potential                 0
+  -total_h                   112.32903343943
+  -total_o                   55.50621669627
+  -cb                        1.3166000468945
+  -density                   1.0010260656644
+  -totals
+  -pH                        0
+  -pe                        14
+  -mu                        0.65830002352241
+  -ah2o                      0.97761779920024
+  -mass_water                1
+  -soln_vol                  1.0003007585848
+  -total_alkalinity          -1.3166000468945
+  -activities
+    E                        -14
+    H(0)                     -31.081697453673
+    O(0)                     -35.333579930768
+  -gammas
+EQUILIBRIUM_PHASES_RAW       4761 Goethite and fixed pe and pH
+  # EXCHANGE_MODIFY candidates; use new_def=true #
+  -new_def                   0
+  -component                 Fix_pH
+      # EQUILIBRIUM_PHASES_MODIFY candidate identifiers #
+      -add_formula           H+
+      -si                    0
+      -moles                 1000
+      -force_equality        0
+      -dissolve_only         0
+      -precipitate_only      0
+      # PPassemblage workspace variables #
+      -si_org                0
+      -delta                 0
+      -initial_moles         0
+      -totals                
+  -component                 Fix_pe
+      # EQUILIBRIUM_PHASES_MODIFY candidate identifiers #
+      -add_formula           O2
+      -si                    -14
+      -moles                 1000
+      -force_equality        0
+      -dissolve_only         0
+      -precipitate_only      0
+      # PPassemblage workspace variables #
+      -si_org                -14
+      -delta                 0
+      -initial_moles         0
+      -totals                
+  -component                 Goethite
+      # EQUILIBRIUM_PHASES_MODIFY candidate identifiers #
+      -si                    0
+      -moles                 10
+      -force_equality        0
+      -dissolve_only         0
+      -precipitate_only      0
+      # PPassemblage workspace variables #
+      -si_org                0
+      -delta                 0
+      -initial_moles         0
+      -totals                
+  -eltList                   # List of all elements in phases and alternate reactions
+    Fe                       1
+    H                        3
+    O                        4
+    e                        1
+  # PPassemblage workspace variables #
+  -assemblage_totals

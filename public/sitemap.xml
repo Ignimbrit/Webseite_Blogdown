@@ -28,12 +28,17 @@
   </url>
   
   <url>
-    <loc>/post/2020-09-10-kriging_with_r/kriging/</loc>
-    <lastmod>2020-09-10T00:00:00+00:00</lastmod>
+    <loc>/post/phreeqc-mineral-solubility/</loc>
+    <lastmod>2021-01-03T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/post/</loc>
+    <lastmod>2021-01-03T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/2020-09-10-kriging_with_r/kriging/</loc>
     <lastmod>2020-09-10T00:00:00+00:00</lastmod>
   </url>
   
