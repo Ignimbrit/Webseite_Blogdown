@@ -77,6 +77,251 @@
     </item>
     
     <item>
+      <title>Tips and Tricks for dealing with geo(logical) data in R</title>
+      <link>/post/maptips_1/</link>
+      <pubDate>Sun, 17 Jan 2021 00:00:00 +0000</pubDate>
+      <guid>/post/maptips_1/</guid>
+      <description>
+
+
+&lt;p&gt;&lt;b&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;div id=&#34;preface&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Preface&lt;/h4&gt;
+&lt;p&gt;Making maps is an essential (in fact, often THE essential) part of working with spatial data. Your analysis is only as good as your ability to communicate the results to the decision makers. The best tool for mapmaking is probably &lt;a href=&#34;https://www.qgis.org/en/site/&#34;&gt;QGIS&lt;/a&gt;. Additionally, I’ve recently seen some people do amazing 3D-topography renderings in &lt;a href=&#34;https://www.blender.org/&#34;&gt;Blender&lt;/a&gt; (something one can also achieve in R thanks do &lt;a href=&#34;https://www.rayshader.com/&#34;&gt;Rayshader&lt;/a&gt;, c.f. &lt;a href=&#34;https://twitter.com/researchremora/status/1366390374244229120&#34;&gt;this tweet&lt;/a&gt;).&lt;/p&gt;
+&lt;p&gt;That said, it is also possible to make professional looking maps in R. It is not as easy as with QGIS and also the result might be just not that aesthetic or customizable, but making maps in R comes with two distinctive advantages:&lt;/p&gt;
+&lt;p&gt;First of all, the process is reproducible. If you get new data, you can just attach them to your data.frame and press play. Especially when maps, data and ideas are tossed around between several people, being able to quickly adapt to new constraints without having to start from from an empty canvas again is invaluable.&lt;/p&gt;
+&lt;p&gt;Second, using R allows you to create many maps at once. Maybe you supervise a groundwater monitoring campaign and need to visualize the monthly sample analyses for the last three years. Maybe the kind of map you are making just needs to be created for a lot of places. In cases like this, manually building maps in a gui will only bring you so far.&lt;/p&gt;
+&lt;p&gt;This blogpost is a bit unlike the others that I have posted before on this website, as it has not so much of a consistent topic, like a linear goal to pursue. I just learned over the past year a couple of neat tricks that come in handy when making maps with R that I would like to share. I will assume here that the reader is somewhat familiar with handling spatial vector data in the &lt;a href=&#34;https://r-spatial.github.io/sf/articles/sf1.html&#34;&gt;sf&lt;/a&gt; format. If you are not (but would like to be), I recommend the excellent free ebook “&lt;a href=&#34;https://geocompr.robinlovelace.net/&#34;&gt;Geocomputation with R&lt;/a&gt;” on the basics of spatial data handling in R.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)     # Data wrangling and plotting
+library(sf)            # Working with vector data
+library(eurostat)      # Accessing European border positions
+library(ows4R)         # Connecting to web feature services
+library(ggspatial)     # Basemap tiles, mapscales and northarrows for ggplot2&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;easily-download-administrative-boundaries-of-europe&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Easily download administrative boundaries of Europe&lt;/h4&gt;
+&lt;p&gt;Often maps require you to pay attention to administrative boundaries of some kind. Maybe because different laws apply in different places. Maybe your customer is a local city council, strictly interested in the processes that affect their own jurisdiction. In either case, the &lt;a href=&#34;http://ropengov.github.io/eurostat/&#34;&gt;eurostat&lt;/a&gt;-package has you covered. The interface ist quite comfortable. Specify the &lt;a href=&#34;https://de.wikipedia.org/wiki/NUTS&#34;&gt;NUTS-level&lt;/a&gt; and the year you are interested in, probably set a resolution, and quickly get a &lt;a href=&#34;https://r-spatial.github.io/sf/articles/sf1.html&#34;&gt;sf&lt;/a&gt; in return.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Let&amp;#39;s Download national and county borders of Europe
+nuts1 &amp;lt;- get_eurostat_geospatial(
+  nuts_level = &amp;quot;1&amp;quot;, # c.f. https://de.wikipedia.org/wiki/NUTS
+  year = &amp;quot;2021&amp;quot;     # current one&amp;#39;s please
+)
+
+nuts3 &amp;lt;- get_eurostat_geospatial(
+  nuts_level = &amp;quot;3&amp;quot;, 
+  year = &amp;quot;2021&amp;quot;, 
+  resolution = &amp;quot;01&amp;quot; # We need better resolution for the small counties
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;dealing-with-larger-than-ram-vectordata-using-sql-queries&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Dealing with larger-than-Ram vectordata using SQL queries&lt;/h4&gt;
+&lt;p&gt;Let’s use the administrative border data we just downloaded for another cool trick: working with larger-than-Ram data. The idea for this I got from &lt;a href=&#34;https://jayrobwilliams.com/posts/2020/09/spatial-sql&#34;&gt;this blogpost&lt;/a&gt;, but I hope I will be able to add a little bit of extra insight.&lt;/p&gt;
+&lt;p&gt;Some geodata are just too big to be loaded into memory in its entirety, even though it may be saved on hard disc or on a server somewhere. In this case, we can make use of a neat feature build into package &lt;a href=&#34;https://r-spatial.github.io/sf/articles/sf1.html&#34;&gt;sf&lt;/a&gt; and pass a SQL query to our data input function, to load only a subset of features.&lt;/p&gt;
+&lt;p&gt;The administrative border data we just downloaded obviously fits perfectly well into memory. Otherwise, the code chunk above would not have worked out. But let’s pretend it does not and that the dataset is instead located in a database somewhere we have access to.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;geopackage_path &amp;lt;- tempfile(fileext = &amp;quot;.gpkg&amp;quot;)
+
+walk2(
+  list(nuts1, nuts3), c(&amp;quot;nuts1&amp;quot;, &amp;quot;nuts3&amp;quot;), function(x, xname, pathname){
+    st_write(
+      x %&amp;gt;% rename(eurostatFID = FID), # otherwise colname collides with driver
+      dsn = pathname, 
+      layer = xname,
+      quiet = TRUE,
+      delete_layer = TRUE
+    )
+  },
+  pathname = geopackage_path
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In the chunk above I stored the spatial data we downloaded in a &lt;a href=&#34;https://en.wikipedia.org/wiki/GeoPackage&#34;&gt;geopackage&lt;/a&gt;, which is essentially a SQLite database. We will soon see that this means we can interact with it using &lt;a href=&#34;https://en.wikipedia.org/wiki/SQL&#34;&gt;SQL-queries&lt;/a&gt;. In fact, thanks to sf implementing the &lt;a href=&#34;https://gdal.org/user/ogr_sql_dialect.html&#34;&gt;GDAL SQL dialect&lt;/a&gt;, we can interact with any spatial format that sf recognizes (say, e.g. a shapefile), as though it was a database.&lt;/p&gt;
+&lt;p&gt;But for now we have a problem: we want some of that data that sits in our database, but we (pretend we) cannot load it all at once. To load a subset of the data, however, we are yet lacking information. If you are familiar with SQL, you might suspect that we would need to know which tables are in our database (tipp: I found the tutorial on this &lt;a href=&#34;https://sqlbolt.com/&#34;&gt;Website helpful&lt;/a&gt; to learn a bit about SQL). Next we would like to know what columns are in those tables and what kind of information these hold. Only then we can specify what subset of data we want to actually load into memory.&lt;/p&gt;
+&lt;p&gt;Fortunately, gathering these information from the geopackage is fairly straightforward.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Finding out which tables (SQL-slang) aka Layers (GIS-slang) we have
+geopackage_layers &amp;lt;- st_layers(geopackage_path)$name # we only want the names
+# to nobodies surprise, it&amp;#39;s the layers we just saved.
+
+# Let&amp;#39;s see what columns we have
+nuts3_header &amp;lt;- st_read(
+  dsn = geopackage_path,
+  query = &amp;quot;SELECT * FROM nuts3 LIMIT 0&amp;quot;, # LIMIT 0 means only headers are loaded
+  quiet = TRUE                           # which won&amp;#39;t overload memory
+) %&amp;gt;% colnames()
+
+print(nuts3_header)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##  [1] &amp;quot;id&amp;quot;          &amp;quot;NUTS_ID&amp;quot;     &amp;quot;LEVL_CODE&amp;quot;   &amp;quot;CNTR_CODE&amp;quot;   &amp;quot;NAME_LATN&amp;quot;  
+##  [6] &amp;quot;NUTS_NAME&amp;quot;   &amp;quot;MOUNT_TYPE&amp;quot;  &amp;quot;URBN_TYPE&amp;quot;   &amp;quot;COAST_TYPE&amp;quot;  &amp;quot;eurostatFID&amp;quot;
+## [11] &amp;quot;geo&amp;quot;         &amp;quot;geom&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Now we should find out a bit more about what kind of information is hiding
+# behind those coloumn names.
+nuts3_firstrows &amp;lt;- st_read(
+  dsn = geopackage_path,
+  query = &amp;quot;SELECT * FROM nuts3 LIMIT 5&amp;quot;, # Still carefully trying to save ram
+  quiet = TRUE
+) %&amp;gt;% st_drop_geometry() %&amp;gt;% as.data.frame() # don&amp;#39;t need geometry yet
+
+# The NUTS_NAME column is the important one but NUTS_ID for Svalbard and 
+# Jan Mayen has some entertainment value on its own.&lt;/code&gt;&lt;/pre&gt;
+&lt;iframe seamless src=&#34;dt1.html&#34; width=&#34;100%&#34; height=&#34;500&#34;&gt;
+&lt;/iframe&gt;
+&lt;p&gt;&lt;b&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Now the interesting column here is NUTS_NAME that allows us to specify e.g. a district or (in Germany) a district-free city. We can use this to load the borders of the city of &lt;a href=&#34;https://en.wikipedia.org/wiki/Cottbus&#34;&gt;Cottbus&lt;/a&gt; without havong to fill valuable memory with the borders of all districts in the entirety of the EU first.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;Cottbus &amp;lt;- st_read(
+  dsn = geopackage_path,
+  query = paste0(
+    &amp;quot;SELECT NUTS_NAME, geom &amp;quot;, #column &amp;quot;geom&amp;quot; referring to the feature geometry
+    &amp;quot;FROM nuts3 &amp;quot;,
+    &amp;quot;WHERE NUTS_NAME = &amp;#39;Cottbus, Kreisfreie Stadt&amp;#39;&amp;quot;
+  ),
+  quiet = TRUE
+) %&amp;gt;% 
+  st_transform(25833)
+
+unlink(geopackage_path)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;accessing-web-feature-services-from-within-r&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Accessing web feature services from within R&lt;/h4&gt;
+&lt;p&gt;Now that we know precisely where Cottbus is located, we can move on and find out more about what’s going on there. In this case, I would like to make a geological map of the city. This of course requires additional, highly specialized data. The kind usually collected by a state-level geological survey. Fortunately, the &lt;a href=&#34;https://geoportal.brandenburg.de/de/geoportal-brandenburg/portal/gp-entwicklung/anwendungen/dienste/psv/landesamt-fuer-bergbau-geologie-und-rohstoffe-lbgr/bGFuZC1sYmdyLWJi/&#34;&gt;geological survey of Brandenburg provides geological map&lt;/a&gt; data via &lt;a href=&#34;https://en.wikipedia.org/wiki/Web_Feature_Service&#34;&gt;wfs-interface&lt;/a&gt; (the city of Cottbus is located within the German state of Brandenburg). Working with wfs can be thought of like connecting with an online database. The &lt;a href=&#34;https://github.com/eblondel/ows4R&#34;&gt;ows4r-package&lt;/a&gt; allows us to interact with wfs-interfaces directly from within R and lets us pull features directly into the sf-structure. Working with ows4r itself can feel a bit arcane, as it is based on R6-objects, which make for an R-untypical syntax, but I will go through it step by step.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# connect to the service we are interested in
+wfs &amp;lt;- WFSClient$new(
+  &amp;quot;https://inspire.brandenburg.de/services/gk_wfs?&amp;quot;,
+  &amp;quot;2.0.0&amp;quot;, logger = &amp;quot;INFO&amp;quot;
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [ows4R][INFO] OWSGetCapabilities - Fetching https://inspire.brandenburg.de/services/gk_wfs?service=WFS&amp;amp;version=2.0.0&amp;amp;request=GetCapabilities&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# have a look around
+caps &amp;lt;- wfs$getCapabilities()
+
+# collect the servers internal structure
+feats &amp;lt;- caps$getFeatureTypes()
+
+# extract the names of available spatial layers
+available_wfs_layers &amp;lt;- map_chr(
+  feats, function(x){x$getName()}
+)
+
+print(available_wfs_layers)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] &amp;quot;app:gk25&amp;quot;   &amp;quot;app:gk100&amp;quot;  &amp;quot;app:gk300&amp;quot;  &amp;quot;app:eem&amp;quot;    &amp;quot;app:qbas&amp;quot;  
+## [6] &amp;quot;app:rinnen&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The layers prefixed “gk” refer to “geologische Karte” (=geological map). There are several diffent resolutions available. For this demonstration, the coarsest one will do.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Specify the feature of interest
+ft &amp;lt;- caps$findFeatureTypeByName(&amp;quot;app:gk300&amp;quot;)
+
+# actually download it
+gk300_bb &amp;lt;- ft$getFeatures()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [ows4R][INFO] WFSGetFeature - Fetching https://inspire.brandenburg.de/services/gk_wfs?service=WFS&amp;amp;version=2.0.0&amp;amp;typeNames=app:gk300&amp;amp;request=GetFeature 
+## [ows4R][INFO] WFSDescribeFeatureType - Fetching https://inspire.brandenburg.de/services/gk_wfs?service=WFS&amp;amp;version=2.0.0&amp;amp;typeName=app:gk300&amp;amp;request=DescribeFeatureType&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We have downloaded the entire geological map of Brandenburg. Now we have to process it a little. As I said, I’m only interested in the area of Cottbus for now. Also the attribute table of that map comes with a set of absolutely cryptic acronyms, referring to the different geological units. I will translate that into something a bit more human-readable.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Keep only that part of the map and the attributes that we need to avoid confusion
+gk_CB &amp;lt;- gk300_bb %&amp;gt;% 
+  st_cast(&amp;quot;GEOMETRYCOLLECTION&amp;quot;) %&amp;gt;%  # https://github.com/r-spatial/sf/issues/748#issuecomment-389811593
+  st_collection_extract(&amp;quot;POLYGON&amp;quot;) %&amp;gt;% 
+  st_set_crs(25833) %&amp;gt;% 
+  st_intersection(Cottbus) %&amp;gt;% 
+  select(
+    keytext = schluesseltext,
+    short_description = kurzbeschreibung,
+    description = beschreibung
+  ) %&amp;gt;% 
+  group_by(keytext, short_description, description) %&amp;gt;% 
+  summarise()
+
+# Translate the acronyms into plain english.
+# Don&amp;#39;t worry if you do not understand what the keytext means.
+# It is basically a code used by a specialized subset of geologists
+# and is something you just look up in a big book.
+simplified_stratigraphy &amp;lt;- tribble(
+  ~keytext,     ~Stratigraphy,
+  &amp;quot;qh,,f&amp;quot;,       &amp;quot;Holocene&amp;quot;,
+  &amp;quot;qh,,y&amp;quot;,       &amp;quot;Holocene&amp;quot;,
+  &amp;quot;qh,H&amp;quot;,        &amp;quot;Holocene&amp;quot;,
+  &amp;quot;qw-qh,,d&amp;quot;,    &amp;quot;Weichselian glaciation&amp;quot;,
+  &amp;quot;qw-qh,,p-f&amp;quot;,  &amp;quot;Weichselian glaciation&amp;quot;,
+  &amp;quot;qs,,b&amp;quot;,       &amp;quot;Saale glaciation&amp;quot;,
+  &amp;quot;qs,,g&amp;quot;,       &amp;quot;Saale glaciation&amp;quot;,
+  &amp;quot;qsD,,gf&amp;quot;,     &amp;quot;Saale glaciation&amp;quot;,
+  &amp;quot;qhol-qsu,,f&amp;quot;, &amp;quot;Holstein interglacial&amp;quot;
+) %&amp;gt;% 
+  mutate(
+    Stratigraphy = factor(
+      Stratigraphy, levels = c( # make sure chronology is honored
+        &amp;quot;Holocene&amp;quot;, &amp;quot;Weichselian glaciation&amp;quot;, &amp;quot;Saale glaciation&amp;quot;, &amp;quot;Holstein interglacial&amp;quot;
+      )
+    )
+  )
+
+gk_CB_stratigraphy &amp;lt;- gk_CB %&amp;gt;% 
+  left_join(simplified_stratigraphy, by = &amp;quot;keytext&amp;quot;) %&amp;gt;% 
+  group_by(Stratigraphy) %&amp;gt;% # this lets us dissolve border betweenall polygons
+  summarize()                # that share the simplified stratigraphy
+                             # that we created above
+
+# We have the data. Now we can make a map!
+map_GK_CB_1 &amp;lt;- ggplot(gk_CB_stratigraphy) +
+  geom_sf(aes(fill = Stratigraphy)) +       # This is the essential step
+  labs(
+    caption = paste0(
+      &amp;quot;© Landesamt für Bergbau, Geologieund Rohstoffe Brandenburg\n&amp;quot;,
+      &amp;quot;Datenlizenz Deutschland Version 2.0: https://www.govdata.de/dl-de/by-2-0&amp;quot;
+    )
+  ) +
+  theme_bw() +
+  theme(
+    axis.title = element_blank(), axis.text = element_blank(),
+    plot.caption = element_text(hjust = 0),
+    plot.caption.position = &amp;quot;plot&amp;quot;
+  )
+
+map_GK_CB_1&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2021-01-17-Geomap/index_files/figure-html/ASimpleMap-1.png&#34; width=&#34;672&#34; /&gt;
+Here we have a very basic geological map. We can see that the geology in the city of Cottbus is dominated by very young quarternary sediments. Nicely visible are the floodplains of the river &lt;a href=&#34;https://en.wikipedia.org/wiki/Spree&#34;&gt;Spree&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;So while this map is already informative, it does not exactly radiate professionalism. Adding a scale and a north arrow would be the bare minimum to make this a product that could be distributed to others. Also a basemap would be nice to give some orientation and overall make the layout look a bit less dull. The &lt;a href=&#34;https://paleolimbot.github.io/ggspatial/&#34;&gt;ggspatial&lt;/a&gt; package makes it super easy to add these mapping essentials to your ggplot.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Making a temporary directory to store maptiles
+osmcache &amp;lt;- tempdir()
+
+map_GK_CB_2 &amp;lt;- ggplot(gk_CB_stratigraphy) +
+  annotation_map_tile(        # the annotaion_ prefix does not recenter the map
+    type = &amp;quot;osmgrayscale&amp;quot;, zoom = 11, 
+    cachedir = osmcache, 
+    progress = &amp;quot;none&amp;quot; # progress is, in fact, allowed, but silent.
+    ) +
+  geom_sf(
+    aes(fill = Stratigraphy), 
+    alpha = 0.5 # make the basemap shine through
+    ) +
+  labs(
+    caption = paste0(
+      &amp;quot;© Landesamt für Bergbau, Geologieund Rohstoffe Brandenburg\n&amp;quot;,
+      &amp;quot;Datenlizenz Deutschland Version 2.0: https://www.govdata.de/dl-de/by-2-0&amp;quot;,
+      &amp;quot;\n© OpenStreetMap Contributors&amp;quot;
+    )
+  ) +
+  annotation_scale( # scale
+    location = &amp;quot;br&amp;quot;,
+    text_cex = 1,
+    width_hint = 0.3
+  ) + 
+  annotation_north_arrow( # north arrow
+    style = north_arrow_fancy_orienteering(),
+    location = &amp;quot;tr&amp;quot;
+  ) +
+  scale_fill_manual( # customize the fill-palette to make it less comicuesqe
+    values = c(&amp;quot;goldenrod1&amp;quot;, &amp;quot;darkorchid4&amp;quot;, &amp;quot;deepskyblue2&amp;quot;, &amp;quot;chartreuse4&amp;quot;)
+  ) +
+  theme_bw() +
+  theme(
+    axis.title = element_blank(), axis.text = element_blank(),
+    plot.caption = element_text(hjust = 0),
+    plot.caption.position = &amp;quot;plot&amp;quot;
+  )
+
+map_GK_CB_2&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2021-01-17-Geomap/index_files/figure-html/ABetterMap-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# delete map tiles on disk
+unlink(osmcache, recursive = TRUE)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now this is a map that could be used in a report to illustrate some detail issue mentioned in the text. If you would like to make your map look even better, check out the &lt;a href=&#34;https://github.com/mtennekes/tmap&#34;&gt;tmap-package&lt;/a&gt; for a specialized approach. To make actual A0-paper print engineering grade plans however, as I mentioned before, it might be necessary to default to QGIS or one of its competitors.&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Modeling the solubility of minerals in water with PHREEQC from R</title>
       <link>/post/phreeqc-mineral-solubility/</link>
       <pubDate>Sun, 03 Jan 2021 00:00:00 +0000</pubDate>
