@@ -1,0 +1,407 @@
+---
+title: Adapting Machine Learning Algorithms for Spatial Interpolation
+author: ''
+date: '2021-05-22'
+slug: spatial_ml
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-05-22T17:17:52+02:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+```{r janitoring, include=FALSE}
+library(blogdown)
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+<b></b>
+
+#### Preface
+
+  If you have been following my blog, you already know that a topic to which I devout quite a lot of time and thought both here and in my day job is spatial interpolation: the art of generalizing from a few localized samples to the regional structure of a feature. In a [post from june last year](https://swilke-geoscience.net/post/spatial_interpolation/) I described a basic workflow on how to make spatial interpolation work with [R](https://www.r-project.org/). In a second post from [september of that same year](https://swilke-geoscience.net/post/2020-09-10-kriging_with_r/kriging/) I have been exploring in more depth some of the challenges and possibilities of Kriging, the most widely used method from the toolbox of geostatistics. In this post I would like to take a look on a couple of machine learning algorithms, that, though extremely popular in many fields, seem yet to be underrepresented in their use in the geosciences.
+
+
+```{r setup}
+# We will need some packages for (spatial) data processing
+library(tidyverse) # wrangling tabular data and plotting
+library(sf)        # processing spatial vector data
+library(rayshader) # we will use the montereybay dataset
+library(patchwork) # combining plots
+
+# And a lot of different packages to test their interpolation functions
+library(automap)   # Automatized approach to Kriging
+library(ranger)    # Random Forests
+library(neuralnet) # Neural Networks
+library(kernlab)   # Support Vector Machine 
+
+set.seed(42)
+
+# The Monterey digital elevation model (dem) from package {rayshader} shall 
+# serve as basis for our calculations. We will use a subset of the data in 
+# order to limit calculation times to an amount suitable for this little 
+# demonstration.
+dem <- tibble(
+  x = rep(1:ncol(montereybay), each = nrow(montereybay)),
+  y = rep(nrow(montereybay):1, times = ncol(montereybay)),
+  z = as.double(montereybay)
+) %>% 
+  filter(x >= 250 & x <= 500 & y >= 200 & y <= 500)
+
+# Let's assume we do not know the full dem but only made a limited 
+# (though generous) number of observations of elevations at random locations
+sample_pts <- sample_n(
+  dem, 
+  size = nrow(dem)*0.01 # sampling 1% of all locations --> 755 observations
+  ) 
+
+dem_plot <- ggplot() + 
+  geom_tile(data = dem, aes(x, y, fill = z)) +
+  scale_fill_viridis_c(option = "C", limits = c(-2800, 1500)) +
+  labs(title = "Digital Elevation Model", fill = 'Elevation ("z")') +
+  coord_fixed() +
+  theme_bw()
+
+sample_plot <- ggplot() +
+  geom_point(data = sample_pts, aes(x, y, fill = z), shape = 21) +
+  scale_fill_viridis_c(option = "C", limits = c(-2800, 1500)) +
+  labs(title = "Random Sampling Locations", fill = 'Elevation ("z")') +
+  coord_fixed() +
+  theme_bw()
+  
+# Thanks to {patchwork} we can combine two independent plots
+dem_plot + sample_plot +
+  plot_layout(guides = "collect") &
+  theme(
+    legend.position='bottom',
+    legend.key.size = unit(1, "cm"),
+    plot.title = element_text(hjust = 0.5)
+    )
+  
+```
+  
+  Machine learning has become something of a hype/buzzword and I am not really in a position to comment on whether that is justified or not. What I can say is that the term describes a set of algorithms that can be very useful to work with geoscience data of various kinds. As we will see, however, adapting them for spatial interpolation isn't build into most of them out of the box and requires some adjustments.  
+  
+  I got the inspiration for this blogpost from Chapter 6 of the free online book [Predictive Soil Mapping with R](https://soilmapper.org/soilmapping-using-mla.html), where the authors demonstrate much of the concepts that lay the basis of what I wish to reiterate here as well. Their workflow as presented there is, however, a bit outdated and in fact relies on packages not longer available from CRAN (I am speaking of GSIF, specifically, which was removed due to compatibility/updating issues but can technically still be obtained from the CRAN archive). I will further expand on the possibilities of spatial machine learning interpolation relying mostly on things I learned from reading [Machine Learning with R](https://www.amazon.de/Machine-Learning-techniques-predictive-modeling/dp/1788295862/ref=pd_lpo_14_img_0/259-7679672-5770057?_encoding=UTF8&pd_rd_i=1788295862&pd_rd_r=f03398f8-6615-45d7-ba7b-2548e9005e68&pd_rd_w=PnMHp&pd_rd_wg=rpR1C&pf_rd_p=149f160f-468b-48f5-aa84-5abbe57cf06d&pf_rd_r=BWSSWAJ8K497F8X3QET0&psc=1&refRID=BWSSWAJ8K497F8X3QET0) by Brett Lantz. If you google the title you may or may not be able to find a free pdf-version of that book.
+  
+  Now that these technicalities are discussed, let's have a look at our input data, depicted in the plot above. On the left hand side, we see a digital elevation model ("dem"), an excerpt from the montereybay dataset that ships with the wonderful [{rayshader}-package](https://www.rayshader.com/) by [Tyler Morgan-Wall](https://twitter.com/tylermorganwall). This is the starting point and ultimative reference to which all interpolation methods will be compared.
+  
+  In the codeblock above, I went on and randomly sampled 1% of the elevations listed in the dem (c.f. the right hand side of the double-plot above). The idea is that I am pretending not to know the full dem but only have access to a limited set of observations of the elevation, from which I have then to deduce the full elevation grid. The dem shown above presents a nice challenge to the interpolation algorithms. We see a deep canyon on the upper left quadrant that comes with a number of branches of various widths, depths and length. In the bottom right corner we can see the onset of a mountain range. The other two quadrants are more or less flat and plateau-ish, yet both at different overall height-levels. When we sampled the dem we inevitably lost information about these intricate topographical features and it will be interesting to see what the different interpolation methods will come up with to fill the gaps.
+  
+#### Step 1: setting the stage (of distance matrices)
+
+  As I mentioned, one cannot apply machine learning algorithms to spatial problems out of the box. The reason for this is that coordinates are autocorrelated. The relationship between x and z depends on y and vice versa. If we force, say, a Neural Network, to make predictions based on x-y-z-values, the results will be disappointing. Fortunately, there is a workaround: instead of describing the elevation data that we are interested in as a function of coordinates x and y, we will focus on distances between observations.
+
+
+```{r DistanceMatrix, warning=FALSE}
+# We do not really need to make a grid for our future predictions here 
+# as we can just take the dem-coordinates.
+grid_df <- dem[, c("x", "y")]
+
+# transforming the data into a spatial vector format. Not that I am not
+# interested in any projection or real world units today.
+sample_sf  <- st_as_sf(
+  sample_pts, coords = c("x", "y")
+  )
+grid_sf <- st_as_sf(
+  grid_df, coords = c("x", "y")
+  )
+
+# Calculating the distance between every sample location and all other
+# sampling locations. 
+# This is data that machine learning algorithms can work with.
+sample_dm <- st_distance(sample_sf, sample_sf) %>% 
+  as_tibble() %>% 
+  mutate(across(everything(), as.double))
+
+# Next we calculate the distances between every sampling location and all
+# points of the prediction grid (where we want to interpolate later on).
+# This can take a couple of seconds.
+grid_dm <- st_distance(grid_sf, sample_sf) %>% 
+  as_tibble() %>% 
+  mutate(across(everything(), as.double))
+
+```
+
+#### Step 2: normalizing inputs
+
+  Many machine learning algorithms require some sort of normalization of input data. That means that if we were to try to feed our calculated distances (e.g. 5m , 500m, 3000m and so on) into the machine learning algorithm, it would respond poorly to this. A common procedure for normalization is to scale the inputs so that they fall into a range between 0 and 1.
+  
+```{r NormalizingFunctions}
+# Let's set up two custom functions, so that we can transparently see what
+# is happening.
+# Scale a value (or, as we shall see, vector) to a range from 0 to 1
+normalize <- function(x, bottom, top){
+  (x - bottom) / (top - bottom)
+}
+
+# backtransform the normalized value into an interpretable/meaningful number
+denormalize <- function(x, bottom, top){
+  (top - bottom) * x + bottom
+}
+
+```
+  
+  We now must apply the normalizing routine both to the distances we calculated and to the elevations that we want to predict.
+  
+```{r ApplyNormalizing}
+
+# Rather than just normalizing each vector of distances individually,
+# we make an informed decision about the distances that can possibly occur
+# within both the training data and the grid dataset. 
+# This makes sure distances are weighted the same everywhere.
+bottom_distance <- 0
+top_distance <- max(grid_dm)
+
+# normalizing both training and grid distances
+sample_dnorm <- map_dfc(
+  sample_dm, 
+  normalize, 
+  bottom = bottom_distance, 
+  top = top_distance
+  )
+
+grid_dnorm <- map_dfc(
+  grid_dm, 
+  normalize, 
+  bottom = bottom_distance, 
+  top = top_distance
+  )
+
+# The actual z-values need to be normalized as well, but here
+# we can derive max and min values directly from the data vector itself
+sample_znorm <- normalize(
+  sample_pts$z, top = max(sample_pts$z), bottom = min(sample_pts$z)
+  )
+```
+
+#### Interpolate!
+  
+  We now have all the data we need in exactly the format we need. We can start interpolating. For this tutorial I want to check the performance of the three machine learning algorithms I perceive to be the most popular and promising for the task: a [Neural Network](https://en.wikipedia.org/wiki/Neural_network), a [Support Vector Machine](https://en.wikipedia.org/wiki/Support-vector_machine) and a (in fact, two) [Random Forest](https://en.wikipedia.org/wiki/Random_forest). To provide further context, we will compare the performance of the machine learning algorithms to classical [Ordinary Kriging](https://en.wikipedia.org/wiki/Kriging).
+
+```{r InspectionFunction}
+# Before we start the actual work let's write a quick autoplot function so that
+# we can optically inspect our results.
+
+autoplot_spi <- function(myresult){
+  ggplot(
+    data = myresult,
+    mapping = aes(x = x, y = y, fill = z)
+  ) +
+    facet_wrap(~model) +
+    geom_tile() +
+    scale_fill_viridis_c(option = "C") +
+    theme_bw()
+}
+
+```
+
+
+##### Kriging
+  
+  I have written about how to do Kriging in R [here](https://swilke-geoscience.net/post/2020-09-10-kriging_with_r/kriging/). We will once again blissfully ignore that Kriging is a complex method that can be optimized by an informed geoscientist with numerous techniques and set absolutely everything on autopilot. As Kriging is THE method specifically designed for spatial interpolation it works just fine with coordinates and does not require normalizing inputs.
+  
+```{r Kriging, warning=FALSE}
+
+res_krige <- autoKrige(               # kriging on autopilot
+  formula = z~1,                      # ordinary kriging shall do
+  input_data = as_Spatial(sample_sf), # converting to spatial points from {sp}
+  new_data = as_Spatial(grid_sf)
+) %>% 
+  .$krige_output %>% 
+  as_tibble() %>% 
+  select(coords.x1, coords.x2, var1.pred) %>% 
+  setNames(c("x", "y", "z")) %>% 
+  mutate(model = "Kriging")
+
+autoplot_spi(res_krige)
+
+```
+
+##### Neural Network
+  
+  The Neural Network is the first machine learning Algorithm I want to try out. It has a reputation for beeing very powerful and mostly opaque in its decisions. Neural Networks are supposed to mimic the human brain by simulating neurons that receive input and, based on an internal function, may or may not decide to produce some kind of output in return. So I guess you could say that the mental model behind Neural Networks is a mental model. 
+  
+  The main tool we have to optimize Neural Networks is to add more neurons or more layers of neurons.
+  
+```{r NeuralNet, warning=FALSE}
+# The input data is the sample point distances and the elevations at said
+# sample points. Everything is normalized.
+nn_input <- cbind(
+  z = sample_znorm,
+  sample_dnorm
+)
+
+# Here we "train" the model by specifying its size and presenting the input.
+mod_nn <- neuralnet(
+  z~., # column z is dependent the variable, all other columns independent
+  data = nn_input,
+  hidden = c(
+    200, 100, 50, 150
+    ) # Four layers of several (arbitrarily chosen) neurons
+)
+
+# Now we ask it to predict elevations for our dem-grid
+predictions_nn <- predict(mod_nn, grid_dnorm)
+
+# Wrapping up the results
+res_nn <- cbind(
+  grid_df,
+  z = denormalize(
+    predictions_nn, top = max(sample_pts$z), bottom = min(sample_pts$z)
+    )
+) %>% 
+  mutate(model = "Neural Network")
+
+autoplot_spi(res_nn)
+
+```
+
+##### Support Vector Machine
+  
+  Support Vector Machines work by subdividing input data, drawing a convex hull around the batches and separating the polygons in all variable dimensions via hyperplanes. That said, I will not further elaborate, as I, personally, might probably not be able to repeat that procedure with pen & paper. Support Vector Machines are black boxes just like Neural Networks, but might be more resilient to overfitting. On the other hand, they require the choice of an adequate kernel algorithm, which seems to happen pretty much by trial, error and good hopes. 
+
+```{r SVM, warning=FALSE}
+mod_svm <- ksvm(
+  z~., # column z is dependent the variable, all other columns independent
+  data = nn_input,
+  kernel = "polydot",
+  C = 25 # A parameter to penalize overfitting
+  )
+
+predictions_svm <- predict(mod_svm, grid_dnorm)
+
+res_svm <- cbind(
+  grid_df,
+  z = denormalize(
+    predictions_svm, top = max(sample_pts$z), bottom = min(sample_pts$z)
+    )
+) %>% 
+  mutate(model = "Support Vector Machine")
+
+autoplot_spi(res_svm)
+```
+
+##### Random Forest
+  
+  Random Forests are another class of wildly popular machine learning algorithms, especially used in statistics, apparently. A Random Forest used for numeric predictions (["Regression"](https://en.wikipedia.org/wiki/Regression_analysis)) is a parliament of if-else-clauses and linear models in a trenchcoat. Notable ways to influence the result is the number of decision trees (a chain of if-else-clauses) in your forest (the trees will hold a vote, at the end of the calculation) and the number of variables considered for every decision (sampled from all available variables).
+  
+  A Random Forest does technically not require normalization of input (though still will not work with coordinates so needs distances instead). As we already have normalized and not-normalized data readily available, we will use both and see if it makes any difference.
+  
+
+```{r RandomForest, warning=FALSE}
+rf_input <- cbind(
+  z = sample_pts$z,
+  sample_dm
+)
+
+mod_rf <- ranger(z~., data = rf_input, num.trees = 1000, mtry = 100)
+mod_rf_norm <- ranger(z~., data = nn_input, num.trees = 1000, mtry = 100)
+
+predictions_rf <- predict(mod_rf, grid_dm) %>% .$prediction
+predictions_rfnorm <- predict(mod_rf_norm, grid_dnorm) %>% .$prediction
+
+res_rf <- cbind(
+  grid_df,
+  z = predictions_rf
+) %>% 
+  mutate(model = "Random Forest")
+
+res_rfn <- cbind(
+  grid_df,
+  z = denormalize(
+    predictions_rfnorm, top = max(sample_pts$z), bottom = min(sample_pts$z)
+    )
+) %>% 
+  mutate(model = "Normalized Random Forest")
+
+autoplot_spi(rbind(res_rf, res_rfn)) + coord_fixed()
+
+```
+
+#### Evaluating Performance
+  
+  Now that we have all predictions available it is time to compare them to the original data. First let's take a look at the images.
+  
+```{r masterplot}
+
+# Gather all results in a single tibble
+res_all <- reduce(
+  list(
+    mutate(dem, model = "Original"), res_krige, 
+    res_svm, res_nn, 
+    res_rf, res_rfn
+    ),
+  rbind
+  ) %>% 
+  mutate(
+    model = factor(
+      model,
+      levels = c(
+        "Original", "Kriging", 
+        "Support Vector Machine", "Neural Network",
+        "Random Forest", "Normalized Random Forest"
+        )
+    )
+  )
+
+# Making a facet plot with didactic grouping of models.
+ggplot(
+  data = res_all,
+  mapping = aes(x = x, y = y, fill = z)
+) +
+  facet_wrap(~model, ncol = 2) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "C") +
+  labs(fill = "Elevation") +
+  theme_bw()
+
+```
+  
+  So what can wee see from this? The loss of detail is substantial, regardless of interpolations method, but that is, of course, ultimately the result of limited available input information. That said, Kriging, Support Vector Machine and Neural Network seem to perform on comparable levels. The Neural Network seems to be the best at depicting the steepness of the major canyon. The Support Vector machine makes probably the best attempt on the mountain range and can somewhat better keep up with the minor canyons than the Neural Network. The Ordinary Kriging approach still seems to lead the field at the end of the day, at least to my impression. It misses some details of the mountain range and seems to have problems with steep angles of the main canyon but isn't particularly bad at any of it either. Plus it manages to separate the plateaus quite nicely.
+  
+  The Random Forest produces a pattern that looks vaguely artistic. While not beeing fundamentally wrong, it clearly hast a tendency to "think" in circles that blures many details.
+  
+  So much for a qualitaive impression, but what are the actual performance numbers?
+  
+```{r Performance}
+
+# Calculating the differences between dem elevation and modeled elevation
+summary_df <- list(res_krige, res_svm, res_nn, res_rf, res_rfn) %>% 
+  map_dfr(
+    function(mod_res, dem_z){
+      mod_res %>% 
+        mutate(error = abs(z-dem_z)) %>% 
+        select(model, error)
+    },
+    dem_z = dem$z
+  ) %>% 
+  group_by(model) %>% 
+  summarise(
+    total_error = sum(error),
+    mean_error = mean(error),
+    sd_error = sd(error)
+  ) %>% 
+  ungroup() %>% 
+  arrange(total_error) %>% 
+  mutate(across(!model, ~formatC(.x, format = "f", digits = 1)))
+
+kableExtra::kable(summary_df)
+
+```
+  
+  Given what I took away from the visual impression, the numeric results somewhat come as a surprise. Kriging won the contest with the Neural Network right at its heels, but next in line are the two Random Forest models (though with a considerable performance drop relative to the Neural Network). The Support Vector Machine makes the biggest total error. On the other hand, its standard deviation is the lowest here, probably indicating some kind of systematic problem. If that was true and could be addressed by proper [hyperparameter tuning](https://en.wikipedia.org/wiki/Hyperparameter_optimization), maybe the performance of the Support Vector Machine could be considerably increased.
+  
+  Of course, we have given none of the algorithms presented here many care when making our predictions. All of them allow for various optimizations, but that process requires both time for careful thought about the methodological implications and for actual computation. If you want to have a look into model tuning in order to get the absolute maximum performance that your machine and method of choice will allow for, I'd recommend using the  [{caret}](http://topepo.github.io/caret/index.html)-package that provides an excellent infrastructure for organizing such tasks. Be aware, however, that evaluating spatial models requires an extra layer of care, e.g. when doing cross-validation. There is an excellent write up of the implications and workarounds in [Chapter 11 of Geocomputation with R](https://geocompr.robinlovelace.net/spatial-cv.html).
+  
+  If you have further thoughts and/or ideas about how to optimize spatial interpolation, be it by specialized parameter tuning or completely other means, feel free to [give me a shout out on Twitter](https://twitter.com/SorenWilke). I would enjoy a discussion and there is so much room for learning more about the whole thematic complex!

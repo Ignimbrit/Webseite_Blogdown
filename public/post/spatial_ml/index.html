@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 4.8.0">
+
+  
+
+  
+  
+  
+  
+  
+    
+    
+    
+  
+  
+
+  <meta name="author" content="Sören Wilke">
+
+  
+  
+  
+    
+  
+  <meta name="description" content="PrefaceIf you have been following my blog, you already know that a topic to which I devout quite a lot of time and thought both here and in my day job is spatial interpolation: the art of generalizing from a few localized samples to the regional structure of a feature.">
+
+  
+  <link rel="alternate" hreflang="en-us" href="/post/spatial_ml/">
+
+  
+
+
+  
+  
+  
+  <meta name="theme-color" content="#795548">
+  
+
+  
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-1/css/all.min.css" integrity="sha256-4w9DunooKSr3MFXHXWyFER38WmPdm361bQS/2KUWZbU=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin="anonymous" title="hl-light">
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/dracula.min.css" crossorigin="anonymous" title="hl-dark" disabled>
+        
+      
+    
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" integrity="sha256-SHMGCYmST46SoyGgo4YR/9AlK1vf3ff84Aq9yK4hdqM=" crossorigin="anonymous">
+    
+
+    
+
+    
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.1.2/lazysizes.min.js" integrity="sha256-Md1qLToewPeKjfAHU1zyPwOutccPAm5tahnaw7Osw0A=" crossorigin="anonymous" async></script>
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+      
+
+      
+      
+        
+      
+
+      
+    
+      
+
+      
+      
+
+      
+    
+
+  
+
+  
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,700%7CRoboto:400,400italic,700%7CRoboto+Mono&display=swap">
+  
+
+  
+  
+  
+  
+  <link rel="stylesheet" href="/css/academic.css">
+
+  
+
+
+
+
+  
+
+
+  
+
+  <link rel="manifest" href="/index.webmanifest">
+  <link rel="icon" type="image/png" href="/images/icon_hu77b1023befc97d4c3f8484db1ec7f5fe_13362_32x32_fill_lanczos_center_2.png">
+  <link rel="apple-touch-icon" type="image/png" href="/images/icon_hu77b1023befc97d4c3f8484db1ec7f5fe_13362_192x192_fill_lanczos_center_2.png">
+
+  <link rel="canonical" href="/post/spatial_ml/">
+
+  
+  
+  
+  
+  
+    
+  
+  
+  <meta property="twitter:card" content="summary_large_image">
+  
+  <meta property="twitter:site" content="@SorenWilke">
+  <meta property="twitter:creator" content="@SorenWilke">
+  
+  <meta property="og:site_name" content="Dr. rer. nat. Sören Wilke">
+  <meta property="og:url" content="/post/spatial_ml/">
+  <meta property="og:title" content="Adapting Machine Learning Algorithms for Spatial Interpolation | Dr. rer. nat. Sören Wilke">
+  <meta property="og:description" content="PrefaceIf you have been following my blog, you already know that a topic to which I devout quite a lot of time and thought both here and in my day job is spatial interpolation: the art of generalizing from a few localized samples to the regional structure of a feature."><meta property="og:image" content="/post/spatial_ml/featured.png">
+  <meta property="twitter:image" content="/post/spatial_ml/featured.png"><meta property="og:locale" content="en-us">
+  
+    
+      <meta property="article:published_time" content="2021-05-22T00:00:00&#43;00:00">
+    
+    <meta property="article:modified_time" content="2021-05-22T17:17:52&#43;02:00">
+  
+
+  
+
+
+    
+
+
+
+
+
+
+  
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "/post/spatial_ml/"
+  },
+  "headline": "Adapting Machine Learning Algorithms for Spatial Interpolation",
+  
+  "image": [
+    "/post/spatial_ml/featured.png"
+  ],
+  
+  "datePublished": "2021-05-22T00:00:00Z",
+  "dateModified": "2021-05-22T17:17:52+02:00",
+  
+  "author": {
+    "@type": "Person",
+    "name": "Sören Wilke"
+  },
+  
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dr. rer. nat. Sören Wilke",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "/images/icon_hu77b1023befc97d4c3f8484db1ec7f5fe_13362_192x192_fill_lanczos_center_2.png"
+    }
+  },
+  "description": "Preface\rIf you have been following my blog, you already know that a topic to which I devout quite a lot of time and thought both here and in my day job is spatial interpolation: the art of generalizing from a few localized samples to the regional structure of a feature."
+}
+</script>
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+
+  <title>Adapting Machine Learning Algorithms for Spatial Interpolation | Dr. rer. nat. Sören Wilke</title>
+
+</head>
+
+<body id="top" data-spy="scroll" data-offset="70" data-target="#TableOfContents" >
+
+  <aside class="search-results" id="search">
+  <div class="container">
+    <section class="search-header">
+
+      <div class="row no-gutters justify-content-between mb-3">
+        <div class="col-6">
+          <h1>Search</h1>
+        </div>
+        <div class="col-6 col-search-close">
+          <a class="js-search" href="#"><i class="fas fa-times-circle text-muted" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div id="search-box">
+        
+        <input name="q" id="search-query" placeholder="Search..." autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" type="search">
+        
+      </div>
+
+    </section>
+    <section class="section-search-results">
+
+      <div id="search-hits">
+        
+      </div>
+
+    </section>
+  </div>
+</aside>
+
+
+  
+
+
+
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light compensate-for-scrollbar" id="navbar-main">
+  <div class="container">
+
+    
+    <div class="d-none d-lg-inline-flex">
+      <a class="navbar-brand" href="/">Dr. rer. nat. Sören Wilke</a>
+    </div>
+    
+
+    
+    <button type="button" class="navbar-toggler" data-toggle="collapse"
+            data-target="#navbar-content" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+    <span><i class="fas fa-bars"></i></span>
+    </button>
+    
+
+    
+    <div class="navbar-brand-mobile-wrapper d-inline-flex d-lg-none">
+      <a class="navbar-brand" href="/">Dr. rer. nat. Sören Wilke</a>
+    </div>
+    
+
+    
+    
+    <div class="navbar-collapse main-menu-item collapse justify-content-start" id="navbar-content">
+
+      
+      <ul class="navbar-nav d-md-inline-flex">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#experience"><span>Experience</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#posts"><span>Posts</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#featured"><span>Publications</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+          
+          
+          
+            
+          
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/#contact"><span>Contact</span></a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        
+        
+        
+        
+        
+        
+
+        <li class="nav-item">
+          <a class="nav-link " href="/impressum"><span>Impressum</span></a>
+        </li>
+
+        
+        
+
+      
+
+        
+      </ul>
+    </div>
+
+    <ul class="nav-icons navbar-nav flex-row ml-auto d-flex pl-md-2">
+      
+      <li class="nav-item">
+        <a class="nav-link js-search" href="#"><i class="fas fa-search" aria-hidden="true"></i></a>
+      </li>
+      
+
+      
+      <li class="nav-item dropdown theme-dropdown">
+        <a href="#" class="nav-link js-theme-selector" data-toggle="dropdown" aria-haspopup="true">
+          <i class="fas fa-palette" aria-hidden="true"></i>
+        </a>
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item js-set-theme-light">
+            <span>Light</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-dark">
+            <span>Dark</span>
+          </a>
+          <a href="#" class="dropdown-item js-set-theme-auto">
+            <span>Automatic</span>
+          </a>
+        </div>
+      </li>
+      
+
+      
+
+    </ul>
+
+  </div>
+</nav>
+
+
+  <article class="article">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+<div class="article-container pt-3">
+  <h1>Adapting Machine Learning Algorithms for Spatial Interpolation</h1>
+
+  
+
+  
+
+
+<div class="article-metadata">
+
+  
+  
+
+  
+  <span class="article-date">
+    
+    
+      
+          Last updated on
+      
+    
+    May 22, 2021
+  </span>
+  
+
+  
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    14 min read
+  </span>
+  
+
+  
+  
+  
+
+  
+  
+
+</div>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+
+
+<div class="article-header article-container featured-image-wrapper mt-4 mb-4" style="max-width: 720px; max-height: 514px;">
+  <div style="position: relative">
+    <img src="/post/spatial_ml/featured_hu95dd7468be6cb0e951c758084bb1a384_294698_720x0_resize_lanczos_2.png" alt="" class="featured-image">
+    
+  </div>
+</div>
+
+
+
+  <div class="article-container">
+
+    <div class="article-style">
+      
+
+
+<p><b></b></p>
+<div id="preface" class="section level4">
+<h4>Preface</h4>
+<p>If you have been following my blog, you already know that a topic to which I devout quite a lot of time and thought both here and in my day job is spatial interpolation: the art of generalizing from a few localized samples to the regional structure of a feature. In a <a href="https://swilke-geoscience.net/post/spatial_interpolation/">post from june last year</a> I described a basic workflow on how to make spatial interpolation work with <a href="https://www.r-project.org/">R</a>. In a second post from <a href="https://swilke-geoscience.net/post/2020-09-10-kriging_with_r/kriging/">september of that same year</a> I have been exploring in more depth some of the challenges and possibilities of Kriging, the most widely used method from the toolbox of geostatistics. In this post I would like to take a look on a couple of machine learning algorithms, that, though extremely popular in many fields, seem yet to be underrepresented in their use in the geosciences.</p>
+<pre class="r"><code># We will need some packages for (spatial) data processing
+library(tidyverse) # wrangling tabular data and plotting
+library(sf)        # processing spatial vector data
+library(rayshader) # we will use the montereybay dataset
+library(patchwork) # combining plots
+
+# And a lot of different packages to test their interpolation functions
+library(automap)   # Automatized approach to Kriging
+library(ranger)    # Random Forests
+library(neuralnet) # Neural Networks
+library(kernlab)   # Support Vector Machine 
+
+set.seed(42)
+
+# The Monterey digital elevation model (dem) from package {rayshader} shall 
+# serve as basis for our calculations. We will use a subset of the data in 
+# order to limit calculation times to an amount suitable for this little 
+# demonstration.
+dem &lt;- tibble(
+  x = rep(1:ncol(montereybay), each = nrow(montereybay)),
+  y = rep(nrow(montereybay):1, times = ncol(montereybay)),
+  z = as.double(montereybay)
+) %&gt;% 
+  filter(x &gt;= 250 &amp; x &lt;= 500 &amp; y &gt;= 200 &amp; y &lt;= 500)
+
+# Let&#39;s assume we do not know the full dem but only made a limited 
+# (though generous) number of observations of elevations at random locations
+sample_pts &lt;- sample_n(
+  dem, 
+  size = nrow(dem)*0.01 # sampling 1% of all locations --&gt; 755 observations
+  ) 
+
+dem_plot &lt;- ggplot() + 
+  geom_tile(data = dem, aes(x, y, fill = z)) +
+  scale_fill_viridis_c(option = &quot;C&quot;, limits = c(-2800, 1500)) +
+  labs(title = &quot;Digital Elevation Model&quot;, fill = &#39;Elevation (&quot;z&quot;)&#39;) +
+  coord_fixed() +
+  theme_bw()
+
+sample_plot &lt;- ggplot() +
+  geom_point(data = sample_pts, aes(x, y, fill = z), shape = 21) +
+  scale_fill_viridis_c(option = &quot;C&quot;, limits = c(-2800, 1500)) +
+  labs(title = &quot;Random Sampling Locations&quot;, fill = &#39;Elevation (&quot;z&quot;)&#39;) +
+  coord_fixed() +
+  theme_bw()
+  
+# Thanks to {patchwork} we can combine two independent plots
+dem_plot + sample_plot +
+  plot_layout(guides = &quot;collect&quot;) &amp;
+  theme(
+    legend.position=&#39;bottom&#39;,
+    legend.key.size = unit(1, &quot;cm&quot;),
+    plot.title = element_text(hjust = 0.5)
+    )</code></pre>
+<p><img src="/post/2021-05-22-spatial-ml/index.en_files/figure-html/setup-1.png" width="672" /></p>
+<p>Machine learning has become something of a hype/buzzword and I am not really in a position to comment on whether that is justified or not. What I can say is that the term describes a set of algorithms that can be very useful to work with geoscience data of various kinds. As we will see, however, adapting them for spatial interpolation isn’t build into most of them out of the box and requires some adjustments.</p>
+<p>I got the inspiration for this blogpost from Chapter 6 of the free online book <a href="https://soilmapper.org/soilmapping-using-mla.html">Predictive Soil Mapping with R</a>, where the authors demonstrate much of the concepts that lay the basis of what I wish to reiterate here as well. Their workflow as presented there is, however, a bit outdated and in fact relies on packages not longer available from CRAN (I am speaking of GSIF, specifically, which was removed due to compatibility/updating issues but can technically still be obtained from the CRAN archive). I will further expand on the possibilities of spatial machine learning interpolation relying mostly on things I learned from reading <a href="https://www.amazon.de/Machine-Learning-techniques-predictive-modeling/dp/1788295862/ref=pd_lpo_14_img_0/259-7679672-5770057?_encoding=UTF8&amp;pd_rd_i=1788295862&amp;pd_rd_r=f03398f8-6615-45d7-ba7b-2548e9005e68&amp;pd_rd_w=PnMHp&amp;pd_rd_wg=rpR1C&amp;pf_rd_p=149f160f-468b-48f5-aa84-5abbe57cf06d&amp;pf_rd_r=BWSSWAJ8K497F8X3QET0&amp;psc=1&amp;refRID=BWSSWAJ8K497F8X3QET0">Machine Learning with R</a> by Brett Lantz. If you google the title you may or may not be able to find a free pdf-version of that book.</p>
+<p>Now that these technicalities are discussed, let’s have a look at our input data, depicted in the plot above. On the left hand side, we see a digital elevation model (“dem”), an excerpt from the montereybay dataset that ships with the wonderful <a href="https://www.rayshader.com/">{rayshader}-package</a> by <a href="https://twitter.com/tylermorganwall">Tyler Morgan-Wall</a>. This is the starting point and ultimative reference to which all interpolation methods will be compared.</p>
+<p>In the codeblock above, I went on and randomly sampled 1% of the elevations listed in the dem (c.f. the right hand side of the double-plot above). The idea is that I am pretending not to know the full dem but only have access to a limited set of observations of the elevation, from which I have then to deduce the full elevation grid. The dem shown above presents a nice challenge to the interpolation algorithms. We see a deep canyon on the upper left quadrant that comes with a number of branches of various widths, depths and length. In the bottom right corner we can see the onset of a mountain range. The other two quadrants are more or less flat and plateau-ish, yet both at different overall height-levels. When we sampled the dem we inevitably lost information about these intricate topographical features and it will be interesting to see what the different interpolation methods will come up with to fill the gaps.</p>
+</div>
+<div id="step-1-setting-the-stage-of-distance-matrices" class="section level4">
+<h4>Step 1: setting the stage (of distance matrices)</h4>
+<p>As I mentioned, one cannot apply machine learning algorithms to spatial problems out of the box. The reason for this is that coordinates are autocorrelated. The relationship between x and z depends on y and vice versa. If we force, say, a Neural Network, to make predictions based on x-y-z-values, the results will be disappointing. Fortunately, there is a workaround: instead of describing the elevation data that we are interested in as a function of coordinates x and y, we will focus on distances between observations.</p>
+<pre class="r"><code># We do not really need to make a grid for our future predictions here 
+# as we can just take the dem-coordinates.
+grid_df &lt;- dem[, c(&quot;x&quot;, &quot;y&quot;)]
+
+# transforming the data into a spatial vector format. Not that I am not
+# interested in any projection or real world units today.
+sample_sf  &lt;- st_as_sf(
+  sample_pts, coords = c(&quot;x&quot;, &quot;y&quot;)
+  )
+grid_sf &lt;- st_as_sf(
+  grid_df, coords = c(&quot;x&quot;, &quot;y&quot;)
+  )
+
+# Calculating the distance between every sample location and all other
+# sampling locations. 
+# This is data that machine learning algorithms can work with.
+sample_dm &lt;- st_distance(sample_sf, sample_sf) %&gt;% 
+  as_tibble() %&gt;% 
+  mutate(across(everything(), as.double))
+
+# Next we calculate the distances between every sampling location and all
+# points of the prediction grid (where we want to interpolate later on).
+# This can take a couple of seconds.
+grid_dm &lt;- st_distance(grid_sf, sample_sf) %&gt;% 
+  as_tibble() %&gt;% 
+  mutate(across(everything(), as.double))</code></pre>
+</div>
+<div id="step-2-normalizing-inputs" class="section level4">
+<h4>Step 2: normalizing inputs</h4>
+<p>Many machine learning algorithms require some sort of normalization of input data. That means that if we were to try to feed our calculated distances (e.g. 5m , 500m, 3000m and so on) into the machine learning algorithm, it would respond poorly to this. A common procedure for normalization is to scale the inputs so that they fall into a range between 0 and 1.</p>
+<pre class="r"><code># Let&#39;s set up two custom functions, so that we can transparently see what
+# is happening.
+# Scale a value (or, as we shall see, vector) to a range from 0 to 1
+normalize &lt;- function(x, bottom, top){
+  (x - bottom) / (top - bottom)
+}
+
+# backtransform the normalized value into an interpretable/meaningful number
+denormalize &lt;- function(x, bottom, top){
+  (top - bottom) * x + bottom
+}</code></pre>
+<p>We now must apply the normalizing routine both to the distances we calculated and to the elevations that we want to predict.</p>
+<pre class="r"><code># Rather than just normalizing each vector of distances individually,
+# we make an informed decision about the distances that can possibly occur
+# within both the training data and the grid dataset. 
+# This makes sure distances are weighted the same everywhere.
+bottom_distance &lt;- 0
+top_distance &lt;- max(grid_dm)
+
+# normalizing both training and grid distances
+sample_dnorm &lt;- map_dfc(
+  sample_dm, 
+  normalize, 
+  bottom = bottom_distance, 
+  top = top_distance
+  )
+
+grid_dnorm &lt;- map_dfc(
+  grid_dm, 
+  normalize, 
+  bottom = bottom_distance, 
+  top = top_distance
+  )
+
+# The actual z-values need to be normalized as well, but here
+# we can derive max and min values directly from the data vector itself
+sample_znorm &lt;- normalize(
+  sample_pts$z, top = max(sample_pts$z), bottom = min(sample_pts$z)
+  )</code></pre>
+</div>
+<div id="interpolate" class="section level4">
+<h4>Interpolate!</h4>
+<p>We now have all the data we need in exactly the format we need. We can start interpolating. For this tutorial I want to check the performance of the three machine learning algorithms I perceive to be the most popular and promising for the task: a <a href="https://en.wikipedia.org/wiki/Neural_network">Neural Network</a>, a <a href="https://en.wikipedia.org/wiki/Support-vector_machine">Support Vector Machine</a> and a (in fact, two) <a href="https://en.wikipedia.org/wiki/Random_forest">Random Forest</a>. To provide further context, we will compare the performance of the machine learning algorithms to classical <a href="https://en.wikipedia.org/wiki/Kriging">Ordinary Kriging</a>.</p>
+<pre class="r"><code># Before we start the actual work let&#39;s write a quick autoplot function so that
+# we can optically inspect our results.
+
+autoplot_spi &lt;- function(myresult){
+  ggplot(
+    data = myresult,
+    mapping = aes(x = x, y = y, fill = z)
+  ) +
+    facet_wrap(~model) +
+    geom_tile() +
+    scale_fill_viridis_c(option = &quot;C&quot;) +
+    theme_bw()
+}</code></pre>
+<div id="kriging" class="section level5">
+<h5>Kriging</h5>
+<p>I have written about how to do Kriging in R <a href="https://swilke-geoscience.net/post/2020-09-10-kriging_with_r/kriging/">here</a>. We will once again blissfully ignore that Kriging is a complex method that can be optimized by an informed geoscientist with numerous techniques and set absolutely everything on autopilot. As Kriging is THE method specifically designed for spatial interpolation it works just fine with coordinates and does not require normalizing inputs.</p>
+<pre class="r"><code>res_krige &lt;- autoKrige(               # kriging on autopilot
+  formula = z~1,                      # ordinary kriging shall do
+  input_data = as_Spatial(sample_sf), # converting to spatial points from {sp}
+  new_data = as_Spatial(grid_sf)
+) %&gt;% 
+  .$krige_output %&gt;% 
+  as_tibble() %&gt;% 
+  select(coords.x1, coords.x2, var1.pred) %&gt;% 
+  setNames(c(&quot;x&quot;, &quot;y&quot;, &quot;z&quot;)) %&gt;% 
+  mutate(model = &quot;Kriging&quot;)</code></pre>
+<pre><code>## [using ordinary kriging]</code></pre>
+<pre class="r"><code>autoplot_spi(res_krige)</code></pre>
+<p><img src="/post/2021-05-22-spatial-ml/index.en_files/figure-html/Kriging-1.png" width="672" /></p>
+</div>
+<div id="neural-network" class="section level5">
+<h5>Neural Network</h5>
+<p>The Neural Network is the first machine learning Algorithm I want to try out. It has a reputation for beeing very powerful and mostly opaque in its decisions. Neural Networks are supposed to mimic the human brain by simulating neurons that receive input and, based on an internal function, may or may not decide to produce some kind of output in return. So I guess you could say that the mental model behind Neural Networks is a mental model.</p>
+<p>The main tool we have to optimize Neural Networks is to add more neurons or more layers of neurons.</p>
+<pre class="r"><code># The input data is the sample point distances and the elevations at said
+# sample points. Everything is normalized.
+nn_input &lt;- cbind(
+  z = sample_znorm,
+  sample_dnorm
+)
+
+# Here we &quot;train&quot; the model by specifying its size and presenting the input.
+mod_nn &lt;- neuralnet(
+  z~., # column z is dependent the variable, all other columns independent
+  data = nn_input,
+  hidden = c(
+    200, 100, 50, 150
+    ) # Four layers of several (arbitrarily chosen) neurons
+)
+
+# Now we ask it to predict elevations for our dem-grid
+predictions_nn &lt;- predict(mod_nn, grid_dnorm)
+
+# Wrapping up the results
+res_nn &lt;- cbind(
+  grid_df,
+  z = denormalize(
+    predictions_nn, top = max(sample_pts$z), bottom = min(sample_pts$z)
+    )
+) %&gt;% 
+  mutate(model = &quot;Neural Network&quot;)
+
+autoplot_spi(res_nn)</code></pre>
+<p><img src="/post/2021-05-22-spatial-ml/index.en_files/figure-html/NeuralNet-1.png" width="672" /></p>
+</div>
+<div id="support-vector-machine" class="section level5">
+<h5>Support Vector Machine</h5>
+<p>Support Vector Machines work by subdividing input data, drawing a convex hull around the batches and separating the polygons in all variable dimensions via hyperplanes. That said, I will not further elaborate, as I, personally, might probably not be able to repeat that procedure with pen &amp; paper. Support Vector Machines are black boxes just like Neural Networks, but might be more resilient to overfitting. On the other hand, they require the choice of an adequate kernel algorithm, which seems to happen pretty much by trial, error and good hopes.</p>
+<pre class="r"><code>mod_svm &lt;- ksvm(
+  z~., # column z is dependent the variable, all other columns independent
+  data = nn_input,
+  kernel = &quot;polydot&quot;,
+  C = 25 # A parameter to penalize overfitting
+  )</code></pre>
+<pre><code>##  Setting default kernel parameters</code></pre>
+<pre class="r"><code>predictions_svm &lt;- predict(mod_svm, grid_dnorm)
+
+res_svm &lt;- cbind(
+  grid_df,
+  z = denormalize(
+    predictions_svm, top = max(sample_pts$z), bottom = min(sample_pts$z)
+    )
+) %&gt;% 
+  mutate(model = &quot;Support Vector Machine&quot;)
+
+autoplot_spi(res_svm)</code></pre>
+<p><img src="/post/2021-05-22-spatial-ml/index.en_files/figure-html/SVM-1.png" width="672" /></p>
+</div>
+<div id="random-forest" class="section level5">
+<h5>Random Forest</h5>
+<p>Random Forests are another class of wildly popular machine learning algorithms, especially used in statistics, apparently. A Random Forest used for numeric predictions (<a href="https://en.wikipedia.org/wiki/Regression_analysis">“Regression”</a>) is a parliament of if-else-clauses and linear models in a trenchcoat. Notable ways to influence the result is the number of decision trees (a chain of if-else-clauses) in your forest (the trees will hold a vote, at the end of the calculation) and the number of variables considered for every decision (sampled from all available variables).</p>
+<p>A Random Forest does technically not require normalization of input (though still will not work with coordinates so needs distances instead). As we already have normalized and not-normalized data readily available, we will use both and see if it makes any difference.</p>
+<pre class="r"><code>rf_input &lt;- cbind(
+  z = sample_pts$z,
+  sample_dm
+)
+
+mod_rf &lt;- ranger(z~., data = rf_input, num.trees = 1000, mtry = 100)
+mod_rf_norm &lt;- ranger(z~., data = nn_input, num.trees = 1000, mtry = 100)
+
+predictions_rf &lt;- predict(mod_rf, grid_dm) %&gt;% .$prediction
+predictions_rfnorm &lt;- predict(mod_rf_norm, grid_dnorm) %&gt;% .$prediction
+
+res_rf &lt;- cbind(
+  grid_df,
+  z = predictions_rf
+) %&gt;% 
+  mutate(model = &quot;Random Forest&quot;)
+
+res_rfn &lt;- cbind(
+  grid_df,
+  z = denormalize(
+    predictions_rfnorm, top = max(sample_pts$z), bottom = min(sample_pts$z)
+    )
+) %&gt;% 
+  mutate(model = &quot;Normalized Random Forest&quot;)
+
+autoplot_spi(rbind(res_rf, res_rfn)) + coord_fixed()</code></pre>
+<p><img src="/post/2021-05-22-spatial-ml/index.en_files/figure-html/RandomForest-1.png" width="672" /></p>
+</div>
+</div>
+<div id="evaluating-performance" class="section level4">
+<h4>Evaluating Performance</h4>
+<p>Now that we have all predictions available it is time to compare them to the original data. First let’s take a look at the images.</p>
+<pre class="r"><code># Gather all results in a single tibble
+res_all &lt;- reduce(
+  list(
+    mutate(dem, model = &quot;Original&quot;), res_krige, 
+    res_svm, res_nn, 
+    res_rf, res_rfn
+    ),
+  rbind
+  ) %&gt;% 
+  mutate(
+    model = factor(
+      model,
+      levels = c(
+        &quot;Original&quot;, &quot;Kriging&quot;, 
+        &quot;Support Vector Machine&quot;, &quot;Neural Network&quot;,
+        &quot;Random Forest&quot;, &quot;Normalized Random Forest&quot;
+        )
+    )
+  )
+
+# Making a facet plot with didactic grouping of models.
+ggplot(
+  data = res_all,
+  mapping = aes(x = x, y = y, fill = z)
+) +
+  facet_wrap(~model, ncol = 2) +
+  geom_tile() +
+  scale_fill_viridis_c(option = &quot;C&quot;) +
+  labs(fill = &quot;Elevation&quot;) +
+  theme_bw()</code></pre>
+<p><img src="/post/2021-05-22-spatial-ml/index.en_files/figure-html/masterplot-1.png" width="672" /></p>
+<p>So what can wee see from this? The loss of detail is substantial, regardless of interpolations method, but that is, of course, ultimately the result of limited available input information. That said, Kriging, Support Vector Machine and Neural Network seem to perform on comparable levels. The Neural Network seems to be the best at depicting the steepness of the major canyon. The Support Vector machine makes probably the best attempt on the mountain range and can somewhat better keep up with the minor canyons than the Neural Network. The Ordinary Kriging approach still seems to lead the field at the end of the day, at least to my impression. It misses some details of the mountain range and seems to have problems with steep angles of the main canyon but isn’t particularly bad at any of it either. Plus it manages to separate the plateaus quite nicely.</p>
+<p>The Random Forest produces a pattern that looks vaguely artistic. While not beeing fundamentally wrong, it clearly hast a tendency to “think” in circles that blures many details.</p>
+<p>So much for a qualitaive impression, but what are the actual performance numbers?</p>
+<pre class="r"><code># Calculating the differences between dem elevation and modeled elevation
+summary_df &lt;- list(res_krige, res_svm, res_nn, res_rf, res_rfn) %&gt;% 
+  map_dfr(
+    function(mod_res, dem_z){
+      mod_res %&gt;% 
+        mutate(error = abs(z-dem_z)) %&gt;% 
+        select(model, error)
+    },
+    dem_z = dem$z
+  ) %&gt;% 
+  group_by(model) %&gt;% 
+  summarise(
+    total_error = sum(error),
+    mean_error = mean(error),
+    sd_error = sd(error)
+  ) %&gt;% 
+  ungroup() %&gt;% 
+  arrange(total_error) %&gt;% 
+  mutate(across(!model, ~formatC(.x, format = &quot;f&quot;, digits = 1)))
+
+kableExtra::kable(summary_df)</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:left;">
+total_error
+</th>
+<th style="text-align:left;">
+mean_error
+</th>
+<th style="text-align:left;">
+sd_error
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Kriging
+</td>
+<td style="text-align:left;">
+3661165.3
+</td>
+<td style="text-align:left;">
+48.5
+</td>
+<td style="text-align:left;">
+61.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neural Network
+</td>
+<td style="text-align:left;">
+3925244.1
+</td>
+<td style="text-align:left;">
+52.0
+</td>
+<td style="text-align:left;">
+65.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Normalized Random Forest
+</td>
+<td style="text-align:left;">
+4697762.2
+</td>
+<td style="text-align:left;">
+62.2
+</td>
+<td style="text-align:left;">
+73.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Random Forest
+</td>
+<td style="text-align:left;">
+4711728.6
+</td>
+<td style="text-align:left;">
+62.4
+</td>
+<td style="text-align:left;">
+73.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Support Vector Machine
+</td>
+<td style="text-align:left;">
+5057921.2
+</td>
+<td style="text-align:left;">
+66.9
+</td>
+<td style="text-align:left;">
+58.1
+</td>
+</tr>
+</tbody>
+</table>
+<p>Given what I took away from the visual impression, the numeric results somewhat come as a surprise. Kriging won the contest with the Neural Network right at its heels, but next in line are the two Random Forest models (though with a considerable performance drop relative to the Neural Network). The Support Vector Machine makes the biggest total error. On the other hand, its standard deviation is the lowest here, probably indicating some kind of systematic problem. If that was true and could be addressed by proper <a href="https://en.wikipedia.org/wiki/Hyperparameter_optimization">hyperparameter tuning</a>, maybe the performance of the Support Vector Machine could be considerably increased.</p>
+<p>Of course, we have given none of the algorithms presented here many care when making our predictions. All of them allow for various optimizations, but that process requires both time for careful thought about the methodological implications and for actual computation. If you want to have a look into model tuning in order to get the absolute maximum performance that your machine and method of choice will allow for, I’d recommend using the <a href="http://topepo.github.io/caret/index.html">{caret}</a>-package that provides an excellent infrastructure for organizing such tasks. Be aware, however, that evaluating spatial models requires an extra layer of care, e.g. when doing cross-validation. There is an excellent write up of the implications and workarounds in <a href="https://geocompr.robinlovelace.net/spatial-cv.html">Chapter 11 of Geocomputation with R</a>.</p>
+<p>If you have further thoughts and/or ideas about how to optimize spatial interpolation, be it by specialized parameter tuning or completely other means, feel free to <a href="https://twitter.com/SorenWilke">give me a shout out on Twitter</a>. I would enjoy a discussion and there is so much room for learning more about the whole thematic complex!</p>
+</div>
+
+    </div>
+
+    
+
+
+
+
+
+
+
+<div class="share-box" aria-hidden="true">
+  <ul class="share">
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://twitter.com/intent/tweet?url=/post/spatial_ml/&amp;text=Adapting%20Machine%20Learning%20Algorithms%20for%20Spatial%20Interpolation" target="_blank" rel="noopener" class="share-btn-twitter">
+          <i class="fab fa-twitter"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.facebook.com/sharer.php?u=/post/spatial_ml/&amp;t=Adapting%20Machine%20Learning%20Algorithms%20for%20Spatial%20Interpolation" target="_blank" rel="noopener" class="share-btn-facebook">
+          <i class="fab fa-facebook"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="mailto:?subject=Adapting%20Machine%20Learning%20Algorithms%20for%20Spatial%20Interpolation&amp;body=/post/spatial_ml/" target="_blank" rel="noopener" class="share-btn-email">
+          <i class="fas fa-envelope"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://www.linkedin.com/shareArticle?url=/post/spatial_ml/&amp;title=Adapting%20Machine%20Learning%20Algorithms%20for%20Spatial%20Interpolation" target="_blank" rel="noopener" class="share-btn-linkedin">
+          <i class="fab fa-linkedin-in"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://web.whatsapp.com/send?text=Adapting%20Machine%20Learning%20Algorithms%20for%20Spatial%20Interpolation%20/post/spatial_ml/" target="_blank" rel="noopener" class="share-btn-whatsapp">
+          <i class="fab fa-whatsapp"></i>
+        </a>
+      </li>
+    
+      
+      
+      
+        
+      
+      
+      
+      <li>
+        <a href="https://service.weibo.com/share/share.php?url=/post/spatial_ml/&amp;title=Adapting%20Machine%20Learning%20Algorithms%20for%20Spatial%20Interpolation" target="_blank" rel="noopener" class="share-btn-weibo">
+          <i class="fab fa-weibo"></i>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+  
+  
+  
+    
+  
+  
+  
+  <div class="media author-card content-widget-hr">
+    
+      
+      <img class="avatar mr-3 avatar-circle" src="/authors/admin/avatar_hu1f94f36023a4535ea796a397ef5c46d9_676750_270x270_fill_q90_lanczos_center.jpg" alt="Sören Wilke">
+    
+
+    <div class="media-body">
+      <h5 class="card-title"><a href="/">Sören Wilke</a></h5>
+      <h6 class="card-subtitle">Dr. rer. nat. Earth Science</h6>
+      <p class="card-text">My research interests include hydrogeochemistry, geologic modelling and geostatistics.</p>
+      <ul class="network-icon" aria-hidden="true">
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="/#contact" >
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://twitter.com/SorenWilke" target="_blank" rel="noopener">
+        <i class="fab fa-twitter"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://github.com/ignimbrit" target="_blank" rel="noopener">
+        <i class="fab fa-github"></i>
+      </a>
+    </li>
+  
+    
+    
+    
+      
+    
+    
+    
+    
+    
+      
+    
+    <li>
+      <a href="https://www.xing.com/profile/Soeren_Wilke2/cv" target="_blank" rel="noopener">
+        <i class="fab fa-xing-square"></i>
+      </a>
+    </li>
+  
+</ul>
+
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  </div>
+</article>
+
+      
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.4/imagesloaded.pkgd.min.js" integrity="sha256-lqvxZrPLtfffUl2G/e7szqSvPBILGbwmsGE1MKlOi0Q=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.6/isotope.pkgd.min.js" integrity="sha256-CBrpuqrMhXwcLLUd5tvQ4euBHCdh7wGlDfNz8vbu/iI=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+
+      
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin="anonymous"></script>
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/languages/r.min.js"></script>
+        
+      
+
+    
+
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js" integrity="sha256-EErZamuLefUnbMBQbsEqu1USa+btR2oIlCpBJbyD4/g=" crossorigin="anonymous"></script>
+    
+
+    
+    
+    <script>const code_highlighting = true;</script>
+    
+
+    
+    
+    <script>const isSiteThemeDark = false;</script>
+    
+
+    
+    
+    
+    
+    
+    
+    <script>
+      const search_config = {"indexURI":"/index.json","minLength":1,"threshold":0.3};
+      const i18n = {"no_results":"No results found","placeholder":"Search...","results":"results found"};
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    
+
+    
+    
+
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      
+    
+    
+    
+    
+    <script src="/js/academic.min.37431be2d92d7fb0160054761ab79602.js"></script>
+
+    
+
+
+
+
+
+
+  
+  
+  <div class="container">
+    <footer class="site-footer">
+  
+
+  <p class="powered-by">
+    © Sören Wilke 2021 &middot; 
+
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" class="back-to-top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+  </div>
+  
+
+  
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

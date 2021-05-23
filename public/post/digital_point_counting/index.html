@@ -652,11 +652,12 @@
 <p><a href="https://en.wikipedia.org/wiki/Point_counting_(geology)">Mineral point counting</a> in <a href="https://en.wikipedia.org/wiki/Thin_section">geological thin sections</a> is a simple yet very useful technique that aims at determining the relative proportion of different minerals within a rock. Quantifying this can give insight on the evolution of a magma within different stages of melt evolution or even underpin comparisons of similar melts from different magmatic complexes. Point counting in it’s classical form is, however, also <a href="https://www.youtube.com/watch?v=3YJHryX7f1U">famously laborious</a>, as it traditionally involves manually shifting the microscopes stage by a fixed interval and basically keeping a tally of what you see at each position.</p>
 <p>With the advent of computerized image processing techniques, digital point counting offers the potential to gather the desired information at a fraction of the time and effort used for the manual technique. This makes it possible to apply point counting to large databases of thin section imagery. I would argue that being able to massively broaden the base of available point counting data by (semi-)automating the gathering process is in itself a significant contribution to the importance of the role that point counting can play in geological investigations.</p>
 <p>In this blogpost we will explore possibilities for digital point counting using <a href="https://www.r-project.org/">R</a> and the <a href="https://github.com/Ignimbrit/mincountr/blob/master/README.md">mincountr</a> library, a little package I wrote to bundle a few basic tools to ease some of the more repetitive tasks of that subject.</p>
-<pre class="r"><code># You can install the mincountr package from github
+<pre class="r"><code># You can install the mincountr package from github:
 # remotes::install_github(&quot;Ignimbrit/mincountr&quot;)
 
 library(mincountr)
 library(ggplot2)</code></pre>
+<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 4.0.3</code></pre>
 <p>Say you have collected an image from a mineral-bearing thin section e.g. in an electron microprobe session and wonder about the relative share of the different phases in your sample. Your image might look something like this:</p>
 <pre class="r"><code>myimage &lt;- mcr_load_image(
   system.file(&quot;extdata&quot;, &quot;testim.png&quot;, package = &quot;mincountr&quot;)

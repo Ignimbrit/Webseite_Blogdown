@@ -77,6 +77,430 @@
     </item>
     
     <item>
+      <title>Adapting Machine Learning Algorithms for Spatial Interpolation</title>
+      <link>/post/spatial_ml/</link>
+      <pubDate>Sat, 22 May 2021 00:00:00 +0000</pubDate>
+      <guid>/post/spatial_ml/</guid>
+      <description>
+
+
+&lt;p&gt;&lt;b&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;div id=&#34;preface&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Preface&lt;/h4&gt;
+&lt;p&gt;If you have been following my blog, you already know that a topic to which I devout quite a lot of time and thought both here and in my day job is spatial interpolation: the art of generalizing from a few localized samples to the regional structure of a feature. In a &lt;a href=&#34;https://swilke-geoscience.net/post/spatial_interpolation/&#34;&gt;post from june last year&lt;/a&gt; I described a basic workflow on how to make spatial interpolation work with &lt;a href=&#34;https://www.r-project.org/&#34;&gt;R&lt;/a&gt;. In a second post from &lt;a href=&#34;https://swilke-geoscience.net/post/2020-09-10-kriging_with_r/kriging/&#34;&gt;september of that same year&lt;/a&gt; I have been exploring in more depth some of the challenges and possibilities of Kriging, the most widely used method from the toolbox of geostatistics. In this post I would like to take a look on a couple of machine learning algorithms, that, though extremely popular in many fields, seem yet to be underrepresented in their use in the geosciences.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# We will need some packages for (spatial) data processing
+library(tidyverse) # wrangling tabular data and plotting
+library(sf)        # processing spatial vector data
+library(rayshader) # we will use the montereybay dataset
+library(patchwork) # combining plots
+
+# And a lot of different packages to test their interpolation functions
+library(automap)   # Automatized approach to Kriging
+library(ranger)    # Random Forests
+library(neuralnet) # Neural Networks
+library(kernlab)   # Support Vector Machine 
+
+set.seed(42)
+
+# The Monterey digital elevation model (dem) from package {rayshader} shall 
+# serve as basis for our calculations. We will use a subset of the data in 
+# order to limit calculation times to an amount suitable for this little 
+# demonstration.
+dem &amp;lt;- tibble(
+  x = rep(1:ncol(montereybay), each = nrow(montereybay)),
+  y = rep(nrow(montereybay):1, times = ncol(montereybay)),
+  z = as.double(montereybay)
+) %&amp;gt;% 
+  filter(x &amp;gt;= 250 &amp;amp; x &amp;lt;= 500 &amp;amp; y &amp;gt;= 200 &amp;amp; y &amp;lt;= 500)
+
+# Let&amp;#39;s assume we do not know the full dem but only made a limited 
+# (though generous) number of observations of elevations at random locations
+sample_pts &amp;lt;- sample_n(
+  dem, 
+  size = nrow(dem)*0.01 # sampling 1% of all locations --&amp;gt; 755 observations
+  ) 
+
+dem_plot &amp;lt;- ggplot() + 
+  geom_tile(data = dem, aes(x, y, fill = z)) +
+  scale_fill_viridis_c(option = &amp;quot;C&amp;quot;, limits = c(-2800, 1500)) +
+  labs(title = &amp;quot;Digital Elevation Model&amp;quot;, fill = &amp;#39;Elevation (&amp;quot;z&amp;quot;)&amp;#39;) +
+  coord_fixed() +
+  theme_bw()
+
+sample_plot &amp;lt;- ggplot() +
+  geom_point(data = sample_pts, aes(x, y, fill = z), shape = 21) +
+  scale_fill_viridis_c(option = &amp;quot;C&amp;quot;, limits = c(-2800, 1500)) +
+  labs(title = &amp;quot;Random Sampling Locations&amp;quot;, fill = &amp;#39;Elevation (&amp;quot;z&amp;quot;)&amp;#39;) +
+  coord_fixed() +
+  theme_bw()
+  
+# Thanks to {patchwork} we can combine two independent plots
+dem_plot + sample_plot +
+  plot_layout(guides = &amp;quot;collect&amp;quot;) &amp;amp;
+  theme(
+    legend.position=&amp;#39;bottom&amp;#39;,
+    legend.key.size = unit(1, &amp;quot;cm&amp;quot;),
+    plot.title = element_text(hjust = 0.5)
+    )&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2021-05-22-spatial-ml/index.en_files/figure-html/setup-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Machine learning has become something of a hype/buzzword and I am not really in a position to comment on whether that is justified or not. What I can say is that the term describes a set of algorithms that can be very useful to work with geoscience data of various kinds. As we will see, however, adapting them for spatial interpolation isn’t build into most of them out of the box and requires some adjustments.&lt;/p&gt;
+&lt;p&gt;I got the inspiration for this blogpost from Chapter 6 of the free online book &lt;a href=&#34;https://soilmapper.org/soilmapping-using-mla.html&#34;&gt;Predictive Soil Mapping with R&lt;/a&gt;, where the authors demonstrate much of the concepts that lay the basis of what I wish to reiterate here as well. Their workflow as presented there is, however, a bit outdated and in fact relies on packages not longer available from CRAN (I am speaking of GSIF, specifically, which was removed due to compatibility/updating issues but can technically still be obtained from the CRAN archive). I will further expand on the possibilities of spatial machine learning interpolation relying mostly on things I learned from reading &lt;a href=&#34;https://www.amazon.de/Machine-Learning-techniques-predictive-modeling/dp/1788295862/ref=pd_lpo_14_img_0/259-7679672-5770057?_encoding=UTF8&amp;amp;pd_rd_i=1788295862&amp;amp;pd_rd_r=f03398f8-6615-45d7-ba7b-2548e9005e68&amp;amp;pd_rd_w=PnMHp&amp;amp;pd_rd_wg=rpR1C&amp;amp;pf_rd_p=149f160f-468b-48f5-aa84-5abbe57cf06d&amp;amp;pf_rd_r=BWSSWAJ8K497F8X3QET0&amp;amp;psc=1&amp;amp;refRID=BWSSWAJ8K497F8X3QET0&#34;&gt;Machine Learning with R&lt;/a&gt; by Brett Lantz. If you google the title you may or may not be able to find a free pdf-version of that book.&lt;/p&gt;
+&lt;p&gt;Now that these technicalities are discussed, let’s have a look at our input data, depicted in the plot above. On the left hand side, we see a digital elevation model (“dem”), an excerpt from the montereybay dataset that ships with the wonderful &lt;a href=&#34;https://www.rayshader.com/&#34;&gt;{rayshader}-package&lt;/a&gt; by &lt;a href=&#34;https://twitter.com/tylermorganwall&#34;&gt;Tyler Morgan-Wall&lt;/a&gt;. This is the starting point and ultimative reference to which all interpolation methods will be compared.&lt;/p&gt;
+&lt;p&gt;In the codeblock above, I went on and randomly sampled 1% of the elevations listed in the dem (c.f. the right hand side of the double-plot above). The idea is that I am pretending not to know the full dem but only have access to a limited set of observations of the elevation, from which I have then to deduce the full elevation grid. The dem shown above presents a nice challenge to the interpolation algorithms. We see a deep canyon on the upper left quadrant that comes with a number of branches of various widths, depths and length. In the bottom right corner we can see the onset of a mountain range. The other two quadrants are more or less flat and plateau-ish, yet both at different overall height-levels. When we sampled the dem we inevitably lost information about these intricate topographical features and it will be interesting to see what the different interpolation methods will come up with to fill the gaps.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;step-1-setting-the-stage-of-distance-matrices&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Step 1: setting the stage (of distance matrices)&lt;/h4&gt;
+&lt;p&gt;As I mentioned, one cannot apply machine learning algorithms to spatial problems out of the box. The reason for this is that coordinates are autocorrelated. The relationship between x and z depends on y and vice versa. If we force, say, a Neural Network, to make predictions based on x-y-z-values, the results will be disappointing. Fortunately, there is a workaround: instead of describing the elevation data that we are interested in as a function of coordinates x and y, we will focus on distances between observations.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# We do not really need to make a grid for our future predictions here 
+# as we can just take the dem-coordinates.
+grid_df &amp;lt;- dem[, c(&amp;quot;x&amp;quot;, &amp;quot;y&amp;quot;)]
+
+# transforming the data into a spatial vector format. Not that I am not
+# interested in any projection or real world units today.
+sample_sf  &amp;lt;- st_as_sf(
+  sample_pts, coords = c(&amp;quot;x&amp;quot;, &amp;quot;y&amp;quot;)
+  )
+grid_sf &amp;lt;- st_as_sf(
+  grid_df, coords = c(&amp;quot;x&amp;quot;, &amp;quot;y&amp;quot;)
+  )
+
+# Calculating the distance between every sample location and all other
+# sampling locations. 
+# This is data that machine learning algorithms can work with.
+sample_dm &amp;lt;- st_distance(sample_sf, sample_sf) %&amp;gt;% 
+  as_tibble() %&amp;gt;% 
+  mutate(across(everything(), as.double))
+
+# Next we calculate the distances between every sampling location and all
+# points of the prediction grid (where we want to interpolate later on).
+# This can take a couple of seconds.
+grid_dm &amp;lt;- st_distance(grid_sf, sample_sf) %&amp;gt;% 
+  as_tibble() %&amp;gt;% 
+  mutate(across(everything(), as.double))&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;step-2-normalizing-inputs&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Step 2: normalizing inputs&lt;/h4&gt;
+&lt;p&gt;Many machine learning algorithms require some sort of normalization of input data. That means that if we were to try to feed our calculated distances (e.g. 5m , 500m, 3000m and so on) into the machine learning algorithm, it would respond poorly to this. A common procedure for normalization is to scale the inputs so that they fall into a range between 0 and 1.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Let&amp;#39;s set up two custom functions, so that we can transparently see what
+# is happening.
+# Scale a value (or, as we shall see, vector) to a range from 0 to 1
+normalize &amp;lt;- function(x, bottom, top){
+  (x - bottom) / (top - bottom)
+}
+
+# backtransform the normalized value into an interpretable/meaningful number
+denormalize &amp;lt;- function(x, bottom, top){
+  (top - bottom) * x + bottom
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We now must apply the normalizing routine both to the distances we calculated and to the elevations that we want to predict.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Rather than just normalizing each vector of distances individually,
+# we make an informed decision about the distances that can possibly occur
+# within both the training data and the grid dataset. 
+# This makes sure distances are weighted the same everywhere.
+bottom_distance &amp;lt;- 0
+top_distance &amp;lt;- max(grid_dm)
+
+# normalizing both training and grid distances
+sample_dnorm &amp;lt;- map_dfc(
+  sample_dm, 
+  normalize, 
+  bottom = bottom_distance, 
+  top = top_distance
+  )
+
+grid_dnorm &amp;lt;- map_dfc(
+  grid_dm, 
+  normalize, 
+  bottom = bottom_distance, 
+  top = top_distance
+  )
+
+# The actual z-values need to be normalized as well, but here
+# we can derive max and min values directly from the data vector itself
+sample_znorm &amp;lt;- normalize(
+  sample_pts$z, top = max(sample_pts$z), bottom = min(sample_pts$z)
+  )&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;interpolate&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Interpolate!&lt;/h4&gt;
+&lt;p&gt;We now have all the data we need in exactly the format we need. We can start interpolating. For this tutorial I want to check the performance of the three machine learning algorithms I perceive to be the most popular and promising for the task: a &lt;a href=&#34;https://en.wikipedia.org/wiki/Neural_network&#34;&gt;Neural Network&lt;/a&gt;, a &lt;a href=&#34;https://en.wikipedia.org/wiki/Support-vector_machine&#34;&gt;Support Vector Machine&lt;/a&gt; and a (in fact, two) &lt;a href=&#34;https://en.wikipedia.org/wiki/Random_forest&#34;&gt;Random Forest&lt;/a&gt;. To provide further context, we will compare the performance of the machine learning algorithms to classical &lt;a href=&#34;https://en.wikipedia.org/wiki/Kriging&#34;&gt;Ordinary Kriging&lt;/a&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Before we start the actual work let&amp;#39;s write a quick autoplot function so that
+# we can optically inspect our results.
+
+autoplot_spi &amp;lt;- function(myresult){
+  ggplot(
+    data = myresult,
+    mapping = aes(x = x, y = y, fill = z)
+  ) +
+    facet_wrap(~model) +
+    geom_tile() +
+    scale_fill_viridis_c(option = &amp;quot;C&amp;quot;) +
+    theme_bw()
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;div id=&#34;kriging&#34; class=&#34;section level5&#34;&gt;
+&lt;h5&gt;Kriging&lt;/h5&gt;
+&lt;p&gt;I have written about how to do Kriging in R &lt;a href=&#34;https://swilke-geoscience.net/post/2020-09-10-kriging_with_r/kriging/&#34;&gt;here&lt;/a&gt;. We will once again blissfully ignore that Kriging is a complex method that can be optimized by an informed geoscientist with numerous techniques and set absolutely everything on autopilot. As Kriging is THE method specifically designed for spatial interpolation it works just fine with coordinates and does not require normalizing inputs.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;res_krige &amp;lt;- autoKrige(               # kriging on autopilot
+  formula = z~1,                      # ordinary kriging shall do
+  input_data = as_Spatial(sample_sf), # converting to spatial points from {sp}
+  new_data = as_Spatial(grid_sf)
+) %&amp;gt;% 
+  .$krige_output %&amp;gt;% 
+  as_tibble() %&amp;gt;% 
+  select(coords.x1, coords.x2, var1.pred) %&amp;gt;% 
+  setNames(c(&amp;quot;x&amp;quot;, &amp;quot;y&amp;quot;, &amp;quot;z&amp;quot;)) %&amp;gt;% 
+  mutate(model = &amp;quot;Kriging&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [using ordinary kriging]&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;autoplot_spi(res_krige)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2021-05-22-spatial-ml/index.en_files/figure-html/Kriging-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;neural-network&#34; class=&#34;section level5&#34;&gt;
+&lt;h5&gt;Neural Network&lt;/h5&gt;
+&lt;p&gt;The Neural Network is the first machine learning Algorithm I want to try out. It has a reputation for beeing very powerful and mostly opaque in its decisions. Neural Networks are supposed to mimic the human brain by simulating neurons that receive input and, based on an internal function, may or may not decide to produce some kind of output in return. So I guess you could say that the mental model behind Neural Networks is a mental model.&lt;/p&gt;
+&lt;p&gt;The main tool we have to optimize Neural Networks is to add more neurons or more layers of neurons.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# The input data is the sample point distances and the elevations at said
+# sample points. Everything is normalized.
+nn_input &amp;lt;- cbind(
+  z = sample_znorm,
+  sample_dnorm
+)
+
+# Here we &amp;quot;train&amp;quot; the model by specifying its size and presenting the input.
+mod_nn &amp;lt;- neuralnet(
+  z~., # column z is dependent the variable, all other columns independent
+  data = nn_input,
+  hidden = c(
+    200, 100, 50, 150
+    ) # Four layers of several (arbitrarily chosen) neurons
+)
+
+# Now we ask it to predict elevations for our dem-grid
+predictions_nn &amp;lt;- predict(mod_nn, grid_dnorm)
+
+# Wrapping up the results
+res_nn &amp;lt;- cbind(
+  grid_df,
+  z = denormalize(
+    predictions_nn, top = max(sample_pts$z), bottom = min(sample_pts$z)
+    )
+) %&amp;gt;% 
+  mutate(model = &amp;quot;Neural Network&amp;quot;)
+
+autoplot_spi(res_nn)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2021-05-22-spatial-ml/index.en_files/figure-html/NeuralNet-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;support-vector-machine&#34; class=&#34;section level5&#34;&gt;
+&lt;h5&gt;Support Vector Machine&lt;/h5&gt;
+&lt;p&gt;Support Vector Machines work by subdividing input data, drawing a convex hull around the batches and separating the polygons in all variable dimensions via hyperplanes. That said, I will not further elaborate, as I, personally, might probably not be able to repeat that procedure with pen &amp;amp; paper. Support Vector Machines are black boxes just like Neural Networks, but might be more resilient to overfitting. On the other hand, they require the choice of an adequate kernel algorithm, which seems to happen pretty much by trial, error and good hopes.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;mod_svm &amp;lt;- ksvm(
+  z~., # column z is dependent the variable, all other columns independent
+  data = nn_input,
+  kernel = &amp;quot;polydot&amp;quot;,
+  C = 25 # A parameter to penalize overfitting
+  )&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##  Setting default kernel parameters&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;predictions_svm &amp;lt;- predict(mod_svm, grid_dnorm)
+
+res_svm &amp;lt;- cbind(
+  grid_df,
+  z = denormalize(
+    predictions_svm, top = max(sample_pts$z), bottom = min(sample_pts$z)
+    )
+) %&amp;gt;% 
+  mutate(model = &amp;quot;Support Vector Machine&amp;quot;)
+
+autoplot_spi(res_svm)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2021-05-22-spatial-ml/index.en_files/figure-html/SVM-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;random-forest&#34; class=&#34;section level5&#34;&gt;
+&lt;h5&gt;Random Forest&lt;/h5&gt;
+&lt;p&gt;Random Forests are another class of wildly popular machine learning algorithms, especially used in statistics, apparently. A Random Forest used for numeric predictions (&lt;a href=&#34;https://en.wikipedia.org/wiki/Regression_analysis&#34;&gt;“Regression”&lt;/a&gt;) is a parliament of if-else-clauses and linear models in a trenchcoat. Notable ways to influence the result is the number of decision trees (a chain of if-else-clauses) in your forest (the trees will hold a vote, at the end of the calculation) and the number of variables considered for every decision (sampled from all available variables).&lt;/p&gt;
+&lt;p&gt;A Random Forest does technically not require normalization of input (though still will not work with coordinates so needs distances instead). As we already have normalized and not-normalized data readily available, we will use both and see if it makes any difference.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;rf_input &amp;lt;- cbind(
+  z = sample_pts$z,
+  sample_dm
+)
+
+mod_rf &amp;lt;- ranger(z~., data = rf_input, num.trees = 1000, mtry = 100)
+mod_rf_norm &amp;lt;- ranger(z~., data = nn_input, num.trees = 1000, mtry = 100)
+
+predictions_rf &amp;lt;- predict(mod_rf, grid_dm) %&amp;gt;% .$prediction
+predictions_rfnorm &amp;lt;- predict(mod_rf_norm, grid_dnorm) %&amp;gt;% .$prediction
+
+res_rf &amp;lt;- cbind(
+  grid_df,
+  z = predictions_rf
+) %&amp;gt;% 
+  mutate(model = &amp;quot;Random Forest&amp;quot;)
+
+res_rfn &amp;lt;- cbind(
+  grid_df,
+  z = denormalize(
+    predictions_rfnorm, top = max(sample_pts$z), bottom = min(sample_pts$z)
+    )
+) %&amp;gt;% 
+  mutate(model = &amp;quot;Normalized Random Forest&amp;quot;)
+
+autoplot_spi(rbind(res_rf, res_rfn)) + coord_fixed()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2021-05-22-spatial-ml/index.en_files/figure-html/RandomForest-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;evaluating-performance&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Evaluating Performance&lt;/h4&gt;
+&lt;p&gt;Now that we have all predictions available it is time to compare them to the original data. First let’s take a look at the images.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Gather all results in a single tibble
+res_all &amp;lt;- reduce(
+  list(
+    mutate(dem, model = &amp;quot;Original&amp;quot;), res_krige, 
+    res_svm, res_nn, 
+    res_rf, res_rfn
+    ),
+  rbind
+  ) %&amp;gt;% 
+  mutate(
+    model = factor(
+      model,
+      levels = c(
+        &amp;quot;Original&amp;quot;, &amp;quot;Kriging&amp;quot;, 
+        &amp;quot;Support Vector Machine&amp;quot;, &amp;quot;Neural Network&amp;quot;,
+        &amp;quot;Random Forest&amp;quot;, &amp;quot;Normalized Random Forest&amp;quot;
+        )
+    )
+  )
+
+# Making a facet plot with didactic grouping of models.
+ggplot(
+  data = res_all,
+  mapping = aes(x = x, y = y, fill = z)
+) +
+  facet_wrap(~model, ncol = 2) +
+  geom_tile() +
+  scale_fill_viridis_c(option = &amp;quot;C&amp;quot;) +
+  labs(fill = &amp;quot;Elevation&amp;quot;) +
+  theme_bw()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2021-05-22-spatial-ml/index.en_files/figure-html/masterplot-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;So what can wee see from this? The loss of detail is substantial, regardless of interpolations method, but that is, of course, ultimately the result of limited available input information. That said, Kriging, Support Vector Machine and Neural Network seem to perform on comparable levels. The Neural Network seems to be the best at depicting the steepness of the major canyon. The Support Vector machine makes probably the best attempt on the mountain range and can somewhat better keep up with the minor canyons than the Neural Network. The Ordinary Kriging approach still seems to lead the field at the end of the day, at least to my impression. It misses some details of the mountain range and seems to have problems with steep angles of the main canyon but isn’t particularly bad at any of it either. Plus it manages to separate the plateaus quite nicely.&lt;/p&gt;
+&lt;p&gt;The Random Forest produces a pattern that looks vaguely artistic. While not beeing fundamentally wrong, it clearly hast a tendency to “think” in circles that blures many details.&lt;/p&gt;
+&lt;p&gt;So much for a qualitaive impression, but what are the actual performance numbers?&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Calculating the differences between dem elevation and modeled elevation
+summary_df &amp;lt;- list(res_krige, res_svm, res_nn, res_rf, res_rfn) %&amp;gt;% 
+  map_dfr(
+    function(mod_res, dem_z){
+      mod_res %&amp;gt;% 
+        mutate(error = abs(z-dem_z)) %&amp;gt;% 
+        select(model, error)
+    },
+    dem_z = dem$z
+  ) %&amp;gt;% 
+  group_by(model) %&amp;gt;% 
+  summarise(
+    total_error = sum(error),
+    mean_error = mean(error),
+    sd_error = sd(error)
+  ) %&amp;gt;% 
+  ungroup() %&amp;gt;% 
+  arrange(total_error) %&amp;gt;% 
+  mutate(across(!model, ~formatC(.x, format = &amp;quot;f&amp;quot;, digits = 1)))
+
+kableExtra::kable(summary_df)&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+model
+&lt;/th&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+total_error
+&lt;/th&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+mean_error
+&lt;/th&gt;
+&lt;th style=&#34;text-align:left;&#34;&gt;
+sd_error
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Kriging
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+3661165.3
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+48.5
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+61.2
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Neural Network
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+3925244.1
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+52.0
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+65.0
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Normalized Random Forest
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+4697762.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+62.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+73.2
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Random Forest
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+4711728.6
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+62.4
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+73.3
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+Support Vector Machine
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+5057921.2
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+66.9
+&lt;/td&gt;
+&lt;td style=&#34;text-align:left;&#34;&gt;
+58.1
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Given what I took away from the visual impression, the numeric results somewhat come as a surprise. Kriging won the contest with the Neural Network right at its heels, but next in line are the two Random Forest models (though with a considerable performance drop relative to the Neural Network). The Support Vector Machine makes the biggest total error. On the other hand, its standard deviation is the lowest here, probably indicating some kind of systematic problem. If that was true and could be addressed by proper &lt;a href=&#34;https://en.wikipedia.org/wiki/Hyperparameter_optimization&#34;&gt;hyperparameter tuning&lt;/a&gt;, maybe the performance of the Support Vector Machine could be considerably increased.&lt;/p&gt;
+&lt;p&gt;Of course, we have given none of the algorithms presented here many care when making our predictions. All of them allow for various optimizations, but that process requires both time for careful thought about the methodological implications and for actual computation. If you want to have a look into model tuning in order to get the absolute maximum performance that your machine and method of choice will allow for, I’d recommend using the &lt;a href=&#34;http://topepo.github.io/caret/index.html&#34;&gt;{caret}&lt;/a&gt;-package that provides an excellent infrastructure for organizing such tasks. Be aware, however, that evaluating spatial models requires an extra layer of care, e.g. when doing cross-validation. There is an excellent write up of the implications and workarounds in &lt;a href=&#34;https://geocompr.robinlovelace.net/spatial-cv.html&#34;&gt;Chapter 11 of Geocomputation with R&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;If you have further thoughts and/or ideas about how to optimize spatial interpolation, be it by specialized parameter tuning or completely other means, feel free to &lt;a href=&#34;https://twitter.com/SorenWilke&#34;&gt;give me a shout out on Twitter&lt;/a&gt;. I would enjoy a discussion and there is so much room for learning more about the whole thematic complex!&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Tips and Tricks for dealing with geo(logical) data in R</title>
       <link>/post/maptips_1/</link>
       <pubDate>Sun, 17 Jan 2021 00:00:00 +0000</pubDate>
@@ -87,7 +511,7 @@
 &lt;p&gt;&lt;b&gt;&lt;/b&gt;&lt;/p&gt;
 &lt;div id=&#34;preface&#34; class=&#34;section level4&#34;&gt;
 &lt;h4&gt;Preface&lt;/h4&gt;
-&lt;p&gt;Making maps is an essential (in fact, often THE essential) part of working with spatial data. Your analysis is only as good as your ability to communicate the results to the decision makers. The best tool for mapmaking is probably &lt;a href=&#34;https://www.qgis.org/en/site/&#34;&gt;QGIS&lt;/a&gt;. Additionally, I’ve recently seen some people do amazing 3D-topography renderings in &lt;a href=&#34;https://www.blender.org/&#34;&gt;Blender&lt;/a&gt; (something one can also achieve in R thanks do &lt;a href=&#34;https://www.rayshader.com/&#34;&gt;Rayshader&lt;/a&gt;, c.f. &lt;a href=&#34;https://twitter.com/researchremora/status/1366390374244229120&#34;&gt;this tweet&lt;/a&gt;).&lt;/p&gt;
+&lt;p&gt;Making maps is an essential (in fact, often the essential) part of working with spatial data. Your analysis is only as good as your ability to communicate the results to the decision makers. The best tool for mapmaking is probably &lt;a href=&#34;https://www.qgis.org/en/site/&#34;&gt;QGIS&lt;/a&gt;. Additionally, I’ve recently seen some people do amazing 3D-topography renderings in &lt;a href=&#34;https://www.blender.org/&#34;&gt;Blender&lt;/a&gt; (something one can also achieve in R thanks do &lt;a href=&#34;https://www.rayshader.com/&#34;&gt;Rayshader&lt;/a&gt;, c.f. &lt;a href=&#34;https://twitter.com/researchremora/status/1366390374244229120&#34;&gt;this tweet&lt;/a&gt;).&lt;/p&gt;
 &lt;p&gt;That said, it is also possible to make professional looking maps in R. It is not as easy as with QGIS and also the result might be just not that aesthetic or customizable, but making maps in R comes with two distinctive advantages:&lt;/p&gt;
 &lt;p&gt;First of all, the process is reproducible. If you get new data, you can just attach them to your data.frame and press play. Especially when maps, data and ideas are tossed around between several people, being able to quickly adapt to new constraints without having to start from from an empty canvas again is invaluable.&lt;/p&gt;
 &lt;p&gt;Second, using R allows you to create many maps at once. Maybe you supervise a groundwater monitoring campaign and need to visualize the monthly sample analyses for the last three years. Maybe the kind of map you are making just needs to be created for a lot of places. In cases like this, manually building maps in a gui will only bring you so far.&lt;/p&gt;
@@ -6946,11 +7370,12 @@ grob_df_MELTS &amp;lt;- generic_input_MELTS %&amp;gt;%
 &lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Point_counting_(geology)&#34;&gt;Mineral point counting&lt;/a&gt; in &lt;a href=&#34;https://en.wikipedia.org/wiki/Thin_section&#34;&gt;geological thin sections&lt;/a&gt; is a simple yet very useful technique that aims at determining the relative proportion of different minerals within a rock. Quantifying this can give insight on the evolution of a magma within different stages of melt evolution or even underpin comparisons of similar melts from different magmatic complexes. Point counting in it’s classical form is, however, also &lt;a href=&#34;https://www.youtube.com/watch?v=3YJHryX7f1U&#34;&gt;famously laborious&lt;/a&gt;, as it traditionally involves manually shifting the microscopes stage by a fixed interval and basically keeping a tally of what you see at each position.&lt;/p&gt;
 &lt;p&gt;With the advent of computerized image processing techniques, digital point counting offers the potential to gather the desired information at a fraction of the time and effort used for the manual technique. This makes it possible to apply point counting to large databases of thin section imagery. I would argue that being able to massively broaden the base of available point counting data by (semi-)automating the gathering process is in itself a significant contribution to the importance of the role that point counting can play in geological investigations.&lt;/p&gt;
 &lt;p&gt;In this blogpost we will explore possibilities for digital point counting using &lt;a href=&#34;https://www.r-project.org/&#34;&gt;R&lt;/a&gt; and the &lt;a href=&#34;https://github.com/Ignimbrit/mincountr/blob/master/README.md&#34;&gt;mincountr&lt;/a&gt; library, a little package I wrote to bundle a few basic tools to ease some of the more repetitive tasks of that subject.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# You can install the mincountr package from github
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# You can install the mincountr package from github:
 # remotes::install_github(&amp;quot;Ignimbrit/mincountr&amp;quot;)
 
 library(mincountr)
 library(ggplot2)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning: package &amp;#39;ggplot2&amp;#39; was built under R version 4.0.3&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Say you have collected an image from a mineral-bearing thin section e.g. in an electron microprobe session and wonder about the relative share of the different phases in your sample. Your image might look something like this:&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;myimage &amp;lt;- mcr_load_image(
   system.file(&amp;quot;extdata&amp;quot;, &amp;quot;testim.png&amp;quot;, package = &amp;quot;mincountr&amp;quot;)

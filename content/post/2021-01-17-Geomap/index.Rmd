@@ -20,6 +20,7 @@ draft: false
 ---
 
 ```{r janitoring, include=FALSE}
+library(blogdown)
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE
@@ -30,7 +31,7 @@ knitr::opts_chunk$set(
 
 #### Preface
 
-  Making maps is an essential (in fact, often THE essential) part of working with spatial data. Your analysis is only as good as your ability to communicate the results to the decision makers. The best tool for mapmaking is probably [QGIS](https://www.qgis.org/en/site/). Additionally, I've recently seen some people do amazing 3D-topography renderings in [Blender](https://www.blender.org/) (something one can also achieve in R thanks do [Rayshader](https://www.rayshader.com/), c.f. [this tweet](https://twitter.com/researchremora/status/1366390374244229120)).
+  Making maps is an essential (in fact, often the essential) part of working with spatial data. Your analysis is only as good as your ability to communicate the results to the decision makers. The best tool for mapmaking is probably [QGIS](https://www.qgis.org/en/site/). Additionally, I've recently seen some people do amazing 3D-topography renderings in [Blender](https://www.blender.org/) (something one can also achieve in R thanks do [Rayshader](https://www.rayshader.com/), c.f. [this tweet](https://twitter.com/researchremora/status/1366390374244229120)).
   
   That said, it is also possible to make professional looking maps in R. It is not as easy as with QGIS and also the result might be just not that aesthetic or customizable, but making maps in R comes with two distinctive advantages:
   

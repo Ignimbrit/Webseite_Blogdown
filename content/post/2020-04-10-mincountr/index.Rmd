@@ -24,7 +24,7 @@ projects: []
   In this blogpost we will explore possibilities for digital point counting using [R](https://www.r-project.org/) and the [mincountr](https://github.com/Ignimbrit/mincountr/blob/master/README.md) library, a little package I wrote to bundle a few basic tools to ease some of the more repetitive tasks of that subject.
   
 ```{r setup}
-# You can install the mincountr package from github
+# You can install the mincountr package from github:
 # remotes::install_github("Ignimbrit/mincountr")
 
 library(mincountr)
