@@ -19,7 +19,7 @@ date_format = "Jan 2006"
 #   Begin/end multi-line descriptions with 3 quotes `"""`.
 [[experience]]
   title = "Project Engineer"
-  company = "AKVO Jungk Consult GmbH"
+  company = "AKVO GmbH (formerly known as Jungk Consult)"
   company_url = "https://www.akvo.de"
   location = "Berlin"
   date_start = "2017-09-01"

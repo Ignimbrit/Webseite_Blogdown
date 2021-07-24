@@ -20,7 +20,7 @@ interests:
 - Geostatistics
 name: Sören Wilke
 organizations:
-- name: AKVO Jungk Consult GmbH
+- name: AKVO GmbH
   url: ""
 role: Dr. rer. nat. Earth Science
 social:
@@ -42,4 +42,4 @@ user_groups:
 - Visitors
 ---
 
-Sören Wilke is a geoscientist and mineralogist working as a project engineer at AKVO Jungk Consult GmbH. His focus areas include the more complex aspects of hydrogeochemical interdependencies in contaminated soils and groundwater bodies as well as modelling the geological geometries controlling contaminant flows.
+Sören Wilke is a geoscientist and mineralogist working as a project engineer at AKVO GmbH. His focus areas include the more complex aspects of hydrogeochemical interdependencies in contaminated soils and groundwater bodies as well as modelling the geological geometries controlling contaminant flows.
