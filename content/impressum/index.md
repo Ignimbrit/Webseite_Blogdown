@@ -7,8 +7,8 @@ summary: ""
 authors: []
 tags: []
 categories: []
-date: 2020-04-05T18:28:03+02:00
-lastmod: 2020-04-05T18:28:03+02:00
+date: 2022-05-14T18:28:03+02:00
+lastmod: 2022-05-14T18:28:03+02:00
 featured: false
 draft: false
 
@@ -32,8 +32,8 @@ projects: []
 ## **Angaben gemäß § 5 TMG**
 
 Dr. rer. nat. Sören Wilke  
-Achillesstraße 94  
-13125 Berlin  
+Memeler Straße 6 
+31303 Burgdorf  
 
 ## **Kontakt**
 Telefon: +49 (0) 151 6453 2291  
@@ -77,7 +77,7 @@ Quelle:
 
 Der auf dieser Webseite veröffentlichte Programmcode steht unter der MIT-Lizenz. Es gelten die folgenden Bedingungen:
 
-Urheberrecht (c) 2020 Sören Wilke
+Urheberrecht (c) 2022 Sören Wilke
 
 Jedem, der eine Kopie dieser Software und der zugehörigen Dokumentationsdateien (die "Software") erhält, wird hiermit kostenlos die Erlaubnis erteilt, ohne Einschränkung mit der Software zu handeln, einschließlich und ohne Einschränkung der Rechte zur Nutzung, zum Kopieren, Ändern, Zusammenführen, Veröffentlichen, Verteilen, Unterlizenzieren und/oder Verkaufen von Kopien der Software, und Personen, denen die Software zur Verfügung gestellt wird, dies unter den folgenden Bedingungen zu gestatten:
 

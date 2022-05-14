@@ -19,11 +19,26 @@ date_format = "Jan 2006"
 #   Begin/end multi-line descriptions with 3 quotes `"""`.
 [[experience]]
   title = "Project Engineer"
+  company = "Mull und Partner Ingenieurgesellschaft mbH"
+  company_url = "https://mullundpartner.de/"
+  location = "Hannover"
+  date_start = "2021-11-01"
+  date_end = ""
+  description = """
+  Responsibilities include:
+  
+  * Design and management of soil/groundwater decontamination projects 
+  * Modelling (Hydrologic Flow, Geology, Hydrochemistry)
+  * Geostatistics
+  """
+
+[[experience]]
+  title = "Project Engineer"
   company = "AKVO GmbH (formerly known as Jungk Consult)"
   company_url = "https://www.akvo.de"
   location = "Berlin"
   date_start = "2017-09-01"
-  date_end = ""
+  date_end = "2021-10-15"
   description = """
   Responsibilities include:
   

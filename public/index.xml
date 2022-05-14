@@ -5,7 +5,7 @@
     <link>/</link>
       <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     <description>Dr. rer. nat. Sören Wilke</description>
-    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2021</copyright><lastBuildDate>Sun, 05 Apr 2020 18:28:03 +0200</lastBuildDate>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2022</copyright><lastBuildDate>Sat, 14 May 2022 18:28:03 +0200</lastBuildDate>
     <image>
       <url>img/map[gravatar:%!s(bool=false) shape:circle]</url>
       <title>Dr. rer. nat. Sören Wilke</title>
@@ -73,6 +73,57 @@
 &lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;shortcodes&lt;/a&gt;.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Further talk details can easily be added to this page using &lt;em&gt;Markdown&lt;/em&gt; and $\rm \LaTeX$ math code.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Impressum</title>
+      <link>/impressum/</link>
+      <pubDate>Sat, 14 May 2022 18:28:03 +0200</pubDate>
+      <guid>/impressum/</guid>
+      <description>&lt;h2 id=&#34;angaben-gemäß--5-tmg&#34;&gt;&lt;strong&gt;Angaben gemäß § 5 TMG&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Dr. rer. nat. Sören Wilke&lt;br&gt;
+Memeler Straße 6 
+31303 Burgdorf&lt;/p&gt;
+&lt;h2 id=&#34;kontakt&#34;&gt;&lt;strong&gt;Kontakt&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Telefon: +49 (0) 151 6453 2291&lt;br&gt;
+E-Mail: &lt;a href=&#34;mailto:swilke@gmx.de&#34;&gt;swilke@gmx.de&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&#34;haftung-für-inhalte&#34;&gt;&lt;strong&gt;Haftung für Inhalte&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den
+allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht
+verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu
+forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen
+Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der
+Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden
+Rechtsverletzungen werden wir diese Inhalte umgehend entfernen.&lt;/p&gt;
+&lt;h3 id=&#34;haftung-für-links&#34;&gt;&lt;strong&gt;Haftung für Links&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben.
+Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der
+verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten
+Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige Inhalte
+waren zum Zeitpunkt der Verlinkung nicht erkennbar.
+Eine permanente inhaltliche Kontrolle der verlinkten Seiten ist jedoch ohne konkrete Anhaltspunkte einer
+Rechtsverletzung nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Links
+umgehend entfernen.&lt;/p&gt;
+&lt;h3 id=&#34;urheberrecht&#34;&gt;&lt;strong&gt;Urheberrecht&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen
+Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der
+Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.
+Soweit die Inhalte auf dieser Seite nicht vom Betreiber erstellt wurden, werden die Urheberrechte Dritter
+beachtet. Insbesondere werden Inhalte Dritter als solche gekennzeichnet. Sollten Sie trotzdem auf eine
+Urheberrechtsverletzung aufmerksam werden, bitten wir um einen entsprechenden Hinweis. Bei
+Bekanntwerden von Rechtsverletzungen werden wir derartige Inhalte umgehend entfernen.&lt;/p&gt;
+&lt;p&gt;Quelle:
+
+&lt;a href=&#34;https://www.e-recht24.de/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;eRecht24&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;nutzung-von-computercode&#34;&gt;&lt;strong&gt;Nutzung von Computercode&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Der auf dieser Webseite veröffentlichte Programmcode steht unter der MIT-Lizenz. Es gelten die folgenden Bedingungen:&lt;/p&gt;
+&lt;p&gt;Urheberrecht (c) 2022 Sören Wilke&lt;/p&gt;
+&lt;p&gt;Jedem, der eine Kopie dieser Software und der zugehörigen Dokumentationsdateien (die &amp;ldquo;Software&amp;rdquo;) erhält, wird hiermit kostenlos die Erlaubnis erteilt, ohne Einschränkung mit der Software zu handeln, einschließlich und ohne Einschränkung der Rechte zur Nutzung, zum Kopieren, Ändern, Zusammenführen, Veröffentlichen, Verteilen, Unterlizenzieren und/oder Verkaufen von Kopien der Software, und Personen, denen die Software zur Verfügung gestellt wird, dies unter den folgenden Bedingungen zu gestatten:&lt;/p&gt;
+&lt;p&gt;Der obige Urheberrechtshinweis und dieser Genehmigungshinweis müssen in allen Kopien oder wesentlichen Teilen der Software enthalten sein.&lt;/p&gt;
+&lt;p&gt;DIE SOFTWARE WIRD OHNE MÄNGELGEWÄHR UND OHNE JEGLICHE AUSDRÜCKLICHE ODER STILLSCHWEIGENDE GEWÄHRLEISTUNG, EINSCHLIEßLICH, ABER NICHT BESCHRÄNKT AUF DIE GEWÄHRLEISTUNG DER MARKTGÄNGIGKEIT, DER EIGNUNG FÜR EINEN BESTIMMTEN ZWECK UND DER NICHTVERLETZUNG VON RECHTEN DRITTER, ZUR VERFÜGUNG GESTELLT. DIE AUTOREN ODER URHEBERRECHTSINHABER SIND IN KEINEM FALL HAFTBAR FÜR ANSPRÜCHE, SCHÄDEN ODER ANDERE VERPFLICHTUNGEN, OB IN EINER VERTRAGS- ODER HAFTUNGSKLAGE, EINER UNERLAUBTEN HANDLUNG ODER ANDERWEITIG, DIE SICH AUS, AUS ODER IN VERBINDUNG MIT DER SOFTWARE ODER DER NUTZUNG ODER ANDEREN GESCHÄFTEN MIT DER SOFTWARE ERGEBEN.&lt;/p&gt;
 </description>
     </item>
     
@@ -7622,57 +7673,6 @@ image_write_gif(
   delay = 0.5
 )&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;featured.gif&#34; width=&#34;400px&#34; /&gt;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Impressum</title>
-      <link>/impressum/</link>
-      <pubDate>Sun, 05 Apr 2020 18:28:03 +0200</pubDate>
-      <guid>/impressum/</guid>
-      <description>&lt;h2 id=&#34;angaben-gemäß--5-tmg&#34;&gt;&lt;strong&gt;Angaben gemäß § 5 TMG&lt;/strong&gt;&lt;/h2&gt;
-&lt;p&gt;Dr. rer. nat. Sören Wilke&lt;br&gt;
-Achillesstraße 94&lt;br&gt;
-13125 Berlin&lt;/p&gt;
-&lt;h2 id=&#34;kontakt&#34;&gt;&lt;strong&gt;Kontakt&lt;/strong&gt;&lt;/h2&gt;
-&lt;p&gt;Telefon: +49 (0) 151 6453 2291&lt;br&gt;
-E-Mail: &lt;a href=&#34;mailto:swilke@gmx.de&#34;&gt;swilke@gmx.de&lt;/a&gt;&lt;/p&gt;
-&lt;h3 id=&#34;haftung-für-inhalte&#34;&gt;&lt;strong&gt;Haftung für Inhalte&lt;/strong&gt;&lt;/h3&gt;
-&lt;p&gt;Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den
-allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht
-verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu
-forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
-Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen
-Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der
-Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden
-Rechtsverletzungen werden wir diese Inhalte umgehend entfernen.&lt;/p&gt;
-&lt;h3 id=&#34;haftung-für-links&#34;&gt;&lt;strong&gt;Haftung für Links&lt;/strong&gt;&lt;/h3&gt;
-&lt;p&gt;Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben.
-Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der
-verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten
-Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige Inhalte
-waren zum Zeitpunkt der Verlinkung nicht erkennbar.
-Eine permanente inhaltliche Kontrolle der verlinkten Seiten ist jedoch ohne konkrete Anhaltspunkte einer
-Rechtsverletzung nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Links
-umgehend entfernen.&lt;/p&gt;
-&lt;h3 id=&#34;urheberrecht&#34;&gt;&lt;strong&gt;Urheberrecht&lt;/strong&gt;&lt;/h3&gt;
-&lt;p&gt;Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen
-Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der
-Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
-Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.
-Soweit die Inhalte auf dieser Seite nicht vom Betreiber erstellt wurden, werden die Urheberrechte Dritter
-beachtet. Insbesondere werden Inhalte Dritter als solche gekennzeichnet. Sollten Sie trotzdem auf eine
-Urheberrechtsverletzung aufmerksam werden, bitten wir um einen entsprechenden Hinweis. Bei
-Bekanntwerden von Rechtsverletzungen werden wir derartige Inhalte umgehend entfernen.&lt;/p&gt;
-&lt;p&gt;Quelle:
-
-&lt;a href=&#34;https://www.e-recht24.de/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;eRecht24&lt;/a&gt;&lt;/p&gt;
-&lt;h2 id=&#34;nutzung-von-computercode&#34;&gt;&lt;strong&gt;Nutzung von Computercode&lt;/strong&gt;&lt;/h2&gt;
-&lt;p&gt;Der auf dieser Webseite veröffentlichte Programmcode steht unter der MIT-Lizenz. Es gelten die folgenden Bedingungen:&lt;/p&gt;
-&lt;p&gt;Urheberrecht (c) 2020 Sören Wilke&lt;/p&gt;
-&lt;p&gt;Jedem, der eine Kopie dieser Software und der zugehörigen Dokumentationsdateien (die &amp;ldquo;Software&amp;rdquo;) erhält, wird hiermit kostenlos die Erlaubnis erteilt, ohne Einschränkung mit der Software zu handeln, einschließlich und ohne Einschränkung der Rechte zur Nutzung, zum Kopieren, Ändern, Zusammenführen, Veröffentlichen, Verteilen, Unterlizenzieren und/oder Verkaufen von Kopien der Software, und Personen, denen die Software zur Verfügung gestellt wird, dies unter den folgenden Bedingungen zu gestatten:&lt;/p&gt;
-&lt;p&gt;Der obige Urheberrechtshinweis und dieser Genehmigungshinweis müssen in allen Kopien oder wesentlichen Teilen der Software enthalten sein.&lt;/p&gt;
-&lt;p&gt;DIE SOFTWARE WIRD OHNE MÄNGELGEWÄHR UND OHNE JEGLICHE AUSDRÜCKLICHE ODER STILLSCHWEIGENDE GEWÄHRLEISTUNG, EINSCHLIEßLICH, ABER NICHT BESCHRÄNKT AUF DIE GEWÄHRLEISTUNG DER MARKTGÄNGIGKEIT, DER EIGNUNG FÜR EINEN BESTIMMTEN ZWECK UND DER NICHTVERLETZUNG VON RECHTEN DRITTER, ZUR VERFÜGUNG GESTELLT. DIE AUTOREN ODER URHEBERRECHTSINHABER SIND IN KEINEM FALL HAFTBAR FÜR ANSPRÜCHE, SCHÄDEN ODER ANDERE VERPFLICHTUNGEN, OB IN EINER VERTRAGS- ODER HAFTUNGSKLAGE, EINER UNERLAUBTEN HANDLUNG ODER ANDERWEITIG, DIE SICH AUS, AUS ODER IN VERBINDUNG MIT DER SOFTWARE ODER DER NUTZUNG ODER ANDEREN GESCHÄFTEN MIT DER SOFTWARE ERGEBEN.&lt;/p&gt;
 </description>
     </item>
     

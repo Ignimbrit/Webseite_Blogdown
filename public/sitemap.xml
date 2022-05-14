@@ -28,6 +28,16 @@
   </url>
   
   <url>
+    <loc>/</loc>
+    <lastmod>2022-05-14T18:28:03+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/impressum/</loc>
+    <lastmod>2022-05-14T18:28:03+02:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/post/spatial_ml/</loc>
     <lastmod>2021-05-22T17:17:52+02:00</lastmod>
   </url>
@@ -80,16 +90,6 @@
   <url>
     <loc>/post/working-with-rdwd/</loc>
     <lastmod>2020-04-08T11:12:26+02:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/</loc>
-    <lastmod>2020-04-05T18:28:03+02:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/impressum/</loc>
-    <lastmod>2020-04-05T18:28:03+02:00</lastmod>
   </url>
   
   <url>
