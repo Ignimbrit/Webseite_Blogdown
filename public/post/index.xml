@@ -5,12 +5,337 @@
     <link>/post/</link>
       <atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     <description>Posts</description>
-    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2022</copyright><lastBuildDate>Sat, 22 May 2021 00:00:00 +0000</lastBuildDate>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><copyright>© Sören Wilke 2022</copyright><lastBuildDate>Sat, 14 May 2022 00:00:00 +0000</lastBuildDate>
     <image>
       <url>img/map[gravatar:%!s(bool=false) shape:circle]</url>
       <title>Posts</title>
       <link>/post/</link>
     </image>
+    
+    <item>
+      <title>Groundwater Drawdown Calculations - Steady State</title>
+      <link>/post/calculate_steady_drawdowns/</link>
+      <pubDate>Sat, 14 May 2022 00:00:00 +0000</pubDate>
+      <guid>/post/calculate_steady_drawdowns/</guid>
+      <description>
+&lt;script src=&#34;/rmarkdown-libs/header-attrs/header-attrs.js&#34;&gt;&lt;/script&gt;
+
+
+&lt;p&gt;&lt;b&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;div id=&#34;preface&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Preface&lt;/h4&gt;
+&lt;p&gt;Well, hello there. It’s been some time. I’ve often thought about doing another post, but life, parenting, moving, having a dayjob - happens. Anyway, the toddler is asleep, I’m on holiday, let’s talk about groundwater calculations!&lt;/p&gt;
+&lt;p&gt;When talking about groundwater calculations, many professionals automatically think of groundwater flow models. Software packages like &lt;a href=&#34;https://www.usgs.gov/software/modflow-6-usgs-modular-hydrologic-model&#34;&gt;MODFLOW&lt;/a&gt; essentially aim at reconstructing the real world in a 3D-computer model and then splitting it up in discrete subunits, for each of which &lt;a href=&#34;https://en.wikipedia.org/wiki/Darcy%27s_law&#34;&gt;Darcy’s Law&lt;/a&gt; is solved in an iteration loop, until all subunits are in equilibrium. This approach works very well and is also extremely powerful. It can (as I may have mentioned before in this blog) be tedious and time consuming to set up such a fully specified 3D-groundwater flow model.&lt;/p&gt;
+&lt;p&gt;If you can live with a bit more of abstraction to solve your problem, however, there is another option to get an idea about what’s going on in your aquifer. On top of darcy’s law, the 20th century has seen the expanse of a whole zoo of equations to describe the impact of infiltration and exfiltration of water from an aquifer. Some of them are derived analytical, others empirical. They can often be quickly implemented in R or whatever your calculation language of choice is, and provide you with a speedy an quite precise assessment of key parameters of water table manipulations, such as volume flux, drawdown and impact range.&lt;/p&gt;
+&lt;p&gt;In this post I want to highlight a couple of these equations that relate to steady state groundwater flow. This means I will here work with equations that assume sufficient time is available to attain equilibrium e.g. after starting to pump water from a well. To create this blogpost I relied heavily on a book called &lt;a href=&#34;https://www.amazon.de/Theorie-Praxis-Grundwasserabsenkung-Klassiker-Bauingenieurwesens/dp/3433032416/ref=sr_1_1?adgrpid=1206164910937407&amp;amp;hvadid=75385407935095&amp;amp;hvbmt=be&amp;amp;hvdev=c&amp;amp;hvlocphy=128772&amp;amp;hvnetw=o&amp;amp;hvqmt=e&amp;amp;hvtargid=kwd-75385510457565%3Aloc-72&amp;amp;hydadcr=844_1925369&amp;amp;keywords=theorie+und+praxis+der+grundwasserabsenkung&amp;amp;qid=1652561882&amp;amp;sr=8-1&#34;&gt;Theorie und Praxis der Grundwasserabsenkung&lt;/a&gt; (Theory and practical aspects of groundwater drawdown). It is an excellent resource but as far as I know it is only available in German.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# We once more set up our R environment
+library(raster)    # working with raster data
+library(tidyverse) # wrangling tabular data and plotting
+library(sf)        # things are more fun when located in realspace
+library(ggspatial) # making maps
+library(isoband)   # beautiful isolines&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;step-1-calculating-the-impact-range-of-a-pumping-well&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Step 1: Calculating the impact range of a pumping well&lt;/h4&gt;
+&lt;p&gt;Let’s imagine we want to pump water from a well. As we make our plans to do so, we worry that by pumping too much water, the drawdown might have negative impact on the surroundings. I am aware of two different popular equations to asses well impact range (both of them empiric).&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;well_range_sichardt &amp;lt;- function(
+    s, # the drawdown of a well created within that well in m
+    k  # the hydraulic conductivity in m/s
+){
+  3000*s*sqrt(k)
+}
+
+well_range_kussakin &amp;lt;- function(
+    s, # the drawdown of a well created within that well in m
+    k, # the hydraulic conductivity in m/s
+    H  # the height of the water table above the aquitard
+){
+  575*s*sqrt((k*H))
+}
+
+# Let&amp;#39;s say we want to create 2m drawdown in an aquifer with a 
+# hydraulic conductivity of 5E-5 m/s 
+# (c.f. https://en.wikipedia.org/wiki/Hydraulic_conductivity#Ranges_of_values_for_natural_materials)
+# and a water table height of 18 m
+
+tibble(
+  Equation = c(&amp;quot;Sichardt&amp;quot;, &amp;quot;Kussakin&amp;quot;),
+  `Range (R) in m` = c(
+    well_range_sichardt(2, 5E-5),
+    well_range_kussakin(2, 5E-5, 18)
+  )
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 2 x 2
+##   Equation `Range (R) in m`
+##   &amp;lt;chr&amp;gt;               &amp;lt;dbl&amp;gt;
+## 1 Sichardt             42.4
+## 2 Kussakin             34.5&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;As you can see, the two equations deliver somewhat different results (except for H = 27 m). Which I think is in part because defining the definite end point of well impact is a somewhat philosophical task, as the drawdown coneshape asymptotically approaches the equilibrium groundwater surface in the infinite distance, at least mathematically.&lt;/p&gt;
+&lt;p&gt;As a rule-of-thump guess however, these numbers both will do in practice. From my personal experience, engineers in my bubble tend to use almost exclusively Sichardt’s equation, often to save themselves the trouble of thinking to hard about how much confidence they have in their definition of the aquifer base as given by ‘H’ (I sure am not blaming anyone for that). That makes Sichardt the de facto standard, afaik.&lt;/p&gt;
+&lt;p&gt;to make things a little more graphic, let’s assume that the well we want to use and for that we just calculated the range is located in the Eilenriede Forest in Hannover, Germany. We can look on a map and check if we are close to any important infrastructure.&lt;/p&gt;
+&lt;p&gt;Disclaimer: all the values in this blogpost are totally made up for educational reasons. Any resemblance to actual wells or aquifers is purely incidental. In fact, the geology used here for calculations is deliberately different from reality.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;mywell &amp;lt;- tibble(name = &amp;quot;mywell_1&amp;quot;, X = 551407, Y = 5804606) %&amp;gt;% 
+  st_as_sf(coords = c(&amp;quot;X&amp;quot;, &amp;quot;Y&amp;quot;), crs = 25832, remove = FALSE)
+
+mywell_range &amp;lt;- st_buffer(
+  mywell,
+  well_range_sichardt(2, 5E-5)
+)
+
+my_map_scope &amp;lt;- st_buffer(mywell_range, 50)
+
+tempfolder &amp;lt;- tempdir() # create space to save the map tiles
+
+# sets up the canvas
+map1 &amp;lt;- ggplot() +
+  # loads background map tiles from a tile source
+  annotation_map_tile(zoom = 17, cachedir = tempfolder, progress = &amp;quot;none&amp;quot;) +
+  # layer_spatial trains the scales
+  layer_spatial(
+    mywell_range, fill = &amp;quot;red&amp;quot;, alpha = 0.25, color = &amp;quot;firebrick&amp;quot;, size = 1.25
+    ) +
+  layer_spatial(
+    mywell, color = &amp;quot;black&amp;quot;, fill = &amp;quot;blue&amp;quot;, 
+    size = 4, shape = 21, stroke = 2
+    ) +
+  layer_spatial(my_map_scope, fill = NA, color = NA) +
+  # spatial-aware automagic scale bar
+  annotation_scale(location = &amp;quot;bl&amp;quot;) +
+  # spatial-aware automagic north arrow
+  annotation_north_arrow(location = &amp;quot;tr&amp;quot;, which_north = &amp;quot;true&amp;quot;)
+
+unlink(tempfolder, recursive = TRUE) # tidy up
+
+print(map1)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2022-05-14-Groundwater_Steady_calcs/index_files/figure-html/FirstMap-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Alright, so looks like our made up well in our hypothetical, not real scenario would create groundwater drawdown beneath a local town road and a popular beergarden. The impact on this infrastructure, however, would depend, among other things, on the magnitude of the drawdown in the direct vicinity of the structures. Lowering the water table by, say, 0.2 m is usually less of an issue than lowering it by 1.5 m. So we must figure out next just how big the drawdown is going to be at a specific distance from the well.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;step-2-calculating-the-pumping-water-flux-volume&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Step 2: Calculating the Pumping water flux volume&lt;/h4&gt;
+&lt;p&gt;In order to determine the drawdown at a distance from a well we need the Dupuit-Thiem-Equations. They are, however, in their basic formulation, meant to derive the amount of water that comes from a well when you create a drawdown ‘s’. It is not exactly what we are looking for but it is an important step on the way so please bear with me.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# There are two equations. One for unconfined and one for confined aquifers.
+# In this example we have implicitly worked with a single, unconfined aquifer
+# so far and will continue to do so.
+
+well_Q_unconfined &amp;lt;- function(
+    H, # the height of the water table above the aquitard in m
+    h, # the height of the water table above the aquitarg INSIDE THE WELL (so H-s) in m
+    R, # the distance at which no impact is being made by the well in m
+    r, # the radius of the well in m
+    k  # the hydraulic conductivity in m/s
+    ){
+  # Result is pumping volume Q in m³/s
+  pi*k*((H^2-h^2)/(log((R/r))))
+}
+
+well_Q_confined &amp;lt;- function(
+    H, 
+    h, 
+    R, 
+    r, 
+    k,
+    m # thickness in m of the geological unit containing the confined aquifer
+    ){
+  # Result is pumping volume Q in m³/s
+  2*pi*k*m*((H-h)/(log((R/r))))
+}
+
+# Check that it works
+check_m3s &amp;lt;- well_Q_unconfined(
+  18, 18-2,
+  well_range_sichardt(18-2, 5E-5),
+  0.0508, 5E-5
+  )
+
+tibble(
+  value = c(
+    formatC(check_m3s, digits = 4, format = &amp;quot;f&amp;quot;), 
+    formatC(check_m3s*1000*60, digits = 4, format = &amp;quot;f&amp;quot;)
+    ),
+  Unit = c(&amp;quot;m³/s&amp;quot;, &amp;quot;l/min&amp;quot;)
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 2 x 2
+##   value   Unit 
+##   &amp;lt;chr&amp;gt;   &amp;lt;chr&amp;gt;
+## 1 0.0012  m³/s 
+## 2 72.7694 l/min&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So that is quite a lot of water, but probably within range of what is achievable from a single 4”-well, given a sufficiently powerful pump. As you can see from the chunk above, the Dupuit-Thiem equation features all kinds of interesting terms related to distances and to the height of the water table at these distances. Now if we could rearrange them, to solve for ‘h’ at a given x, that would be a step forward.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;step-3-calculating-the-well-drawdown-for-a-given-pumping-rate&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Step 3: Calculating the well drawdown for a given pumping rate&lt;/h4&gt;
+&lt;p&gt;So we want to solve a different problem than the one that the Dupuit-Thiem equation is trying to answer. We do not care so much for the volume flux ‘Q’. In the field we can just fire up the pump until its rate matches a desired outcome. We would, however, very much like to know, what the impact of our deeds on the aquifer would be.&lt;/p&gt;
+&lt;p&gt;So this is a bit of a tricky problem. Basically we want so solve the equation for ‘h’. But as you can see from the chunk above, the equation also contains ‘R’ which is itself calculated depending on ‘h’. This results in kind of a mathematical mess that I must humbly admit I could not figure out analytically myself. That’s why I brute-forced it.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;well_h_unconfined &amp;lt;- function(
+    Q, # water volume flux pumped from the well in m³/s
+    H, # the height of the water table above the aquitard in m
+    r, # the radius of the well in m
+    k, # the hydraulic conductivity in m/s
+    s_search_min = 0.001, # minimum drawdown in m to be tried
+    s_search_max = H      # maximum drawdown in m to be tried
+    ){
+  
+  # a slightly retooled formulation of `well_Q_unconfined` to fit the purpose
+  speculative_Q &amp;lt;- function(s, H, r, k){
+    pi*k*((H^2-(H-s)^2)/(log(((well_range_sichardt(s = s, k = k))/r))))
+  }
+  
+  # What is the difference between Q at a given drawdown s and the acutal
+  # Q we apply at our pump
+  q_speculation_quality &amp;lt;- function(s, Q, H, r, k){
+    Q_spec &amp;lt;- speculative_Q(s = s, H = H, r = r, k = k)
+    sqrt(((Q-Q_spec)^2))
+  }
+  
+  # calculate Q for every conceivable s and keep only the one that is closest
+  # to &amp;quot;our&amp;quot; Q
+  ompitimization_res &amp;lt;- stats::optimize(
+    q_speculation_quality,
+    interval = c(s_search_min, s_search_max),
+    Q = Q, H = H, r = r, k = k
+  )
+  
+  s &amp;lt;- ompitimization_res$minimum
+  
+  # returning h
+  H-s
+}
+
+well_h_unconfined(Q = 0.0011, H = 18, r = 0.0508, k = 5E-5)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] 16.73625&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Not too bad. The difference of ~0.74 m to the actual ‘h’ of 16 m that we know from above comes from the fact that, mathematically, the water surface within our 4” well isn’t flat and at the rim the cone has already risen by that amount.&lt;/p&gt;
+&lt;p&gt;But wait. The distance x between the well center and the well radius ‘r’ gives us a difference in ‘h’? So we can just forget about the mental model of a solid steel&amp;amp;PVC well and use any given distance to generate ‘h’ at ‘x’?&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;step-4-calculating-the-drawdown-coneshape&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;Step 4: Calculating the drawdown coneshape&lt;/h4&gt;
+&lt;p&gt;If we can get ‘h’ and therefore ‘s’ at any given distance, we can make Isolines and assess the magnitude of the impact of our well on the surroundings!&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;well_coneshape &amp;lt;- function(
+    x, # distance from the well in m
+    Q, # water volume flux pumped from the well in m³/s
+    H, # the height of the water table above the aquitard in m
+    r, # the radius of the well in m
+    k, # the hydraulic conductivity in m/s
+    s_search_min = 0.001,
+    s_search_max = H
+    ){
+  
+  # get the water height within the well
+  h &amp;lt;-  well_h_unconfined(
+    Q = Q, H = H, r = r, k = k, 
+    s_search_min = s_search_min, s_search_max = s_search_max
+    )
+  
+  # get the drawdown within the well
+  s &amp;lt;- H-h
+  R &amp;lt;- well_range_sichardt(s = s, k = k)
+  
+  # well impact mustn&amp;#39;t exceed range
+  if(x &amp;gt;= R){
+    H
+  } else {
+    # solve Dupuit-Thiem one last time
+    # but this time, target range is x
+    sqrt(((Q*(2.3*(log10(x)-log10(r))))/(pi*k))+h^2)
+  }
+}
+
+# Quick check
+
+x_range &amp;lt;- seq(0.2, 65, 0.2)
+h_at_x &amp;lt;- vapply(
+ x_range,
+ well_coneshape,
+ numeric(1),
+ Q = 0.002, H = 18, r = 0.0508, k = 5E-5
+ )
+
+# quick visual
+ggplot(
+  data = tibble(
+    `distance from well [m]` = x_range,
+    `water coloumn height above aquitard [m]`= h_at_x
+    ),
+  mapping = aes(
+    x = `distance from well [m]`, 
+    y = `water coloumn height above aquitard [m]`
+    )
+) +
+  geom_line(color = &amp;quot;blue&amp;quot;, size = 1) + theme_bw()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2022-05-14-Groundwater_Steady_calcs/index_files/figure-html/Coneshape-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;It works in 1D. In order to plot it on a map, I’d like to transition do 2D.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Make a regular grid of point coordinates of the model area
+distgrid &amp;lt;- st_make_grid(my_map_scope, cellsize = 2, what = &amp;quot;centers&amp;quot;) %&amp;gt;% 
+  st_as_sf() %&amp;gt;% 
+  cbind(., st_coordinates(.)) %&amp;gt;% 
+  mutate(., welldist = st_distance(., mywell) %&amp;gt;% as.numeric()) %&amp;gt;%   # calculate distance to well per point
+  mutate( # calculate drawdown at ecery grid point
+    drawdown = 18 - map_dbl(
+      welldist, 
+      well_coneshape,
+      Q = 0.002, H = 18, r = 0.0508, k = 5E-5
+      )
+  )
+
+# convert to spatial raster
+distrast &amp;lt;- distgrid %&amp;gt;% 
+  st_drop_geometry() %&amp;gt;% 
+  select(X, Y, drawdown) %&amp;gt;% 
+  rasterFromXYZ(crs = &amp;quot;EPSG:25832&amp;quot;)
+
+# Function to make isolines from raster
+isolines_raster &amp;lt;- function(x, lvl) {
+  b &amp;lt;- isoband::isolines(
+    xFromCol(x, seq_len(dim(x)[2L])), 
+    yFromRow(x, seq_len(dim(x)[1L])), 
+    as.matrix(x[[1]], wide = TRUE), 
+    levels = lvl)
+  sf::st_sf(lvl = lvl, geometry  = sf::st_sfc(isoband::iso_to_sfg(b), crs = st_crs(x)))
+}
+
+# create isolines
+drawdown_isos &amp;lt;- isolines_raster(
+  distrast,
+  lvl = seq(
+    floor(min(distgrid$drawdown)) - 1,
+    ceiling(max(distgrid$drawdown)) + 1,
+    0.1
+    )
+) %&amp;gt;% 
+  filter(., !st_is_empty(.))
+
+
+# plot!!
+
+tempfolder2 &amp;lt;- tempdir() # create space to save the map tiles
+
+# sets up the canvas
+map2 &amp;lt;- ggplot() +
+  # loads background map tiles from a tile source
+  annotation_map_tile(
+    zoom = 18, cachedir = tempfolder2, progress = &amp;quot;none&amp;quot;, type = &amp;quot;stamenbw&amp;quot;
+    ) +
+  # layer_spatial trains the scales
+  layer_spatial(
+    drawdown_isos,
+    aes(color = lvl),
+    size = 1
+    ) +
+  layer_spatial(mywell, color = &amp;quot;black&amp;quot;, size = 1) +
+  layer_spatial(st_buffer(drawdown_isos, 10), fill = NA, color = NA) +
+  # spatial-aware automagic scale bar
+  annotation_scale(location = &amp;quot;bl&amp;quot;) +
+  # spatial-aware automagic north arrow
+  annotation_north_arrow(location = &amp;quot;tr&amp;quot;, which_north = &amp;quot;true&amp;quot;) +
+  scale_color_viridis_c(begin = 0.1)
+
+unlink(tempfolder2, recursive = TRUE) # tidy up
+
+print(map2)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2022-05-14-Groundwater_Steady_calcs/index_files/figure-html/SecondMap-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;As you can see, the drawdown that reaches the road in this made up scenario is up to 0.8 m. Depending on the geology of the area and some other factors, this could be problematic. The beergarden in the north however receives less than 0.3 m drawdown. Often, but not always, this is an unproblematic amount of drawdown.&lt;/p&gt;
+&lt;p&gt;Special thanks once more to &lt;a href=&#34;https://twitter.com/paleolimbot&#34;&gt;&lt;span class=&#34;citation&#34;&gt;@paleolimbot&lt;/span&gt;&lt;/a&gt; for creating ggspatial. I also owe a lot to &lt;a href=&#34;https://twitter.com/mdsumner&#34;&gt;&lt;span class=&#34;citation&#34;&gt;@mdsumner&lt;/span&gt;&lt;/a&gt;, who came up with &lt;a href=&#34;https://gist.github.com/mdsumner/eab05cc75176add545859054f3aa8bf4&#34;&gt;a way to make {isoband} isolines from raster&lt;/a&gt; objects.&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
     
     <item>
       <title>Adapting Machine Learning Algorithms for Spatial Interpolation</title>

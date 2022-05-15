@@ -1,0 +1,374 @@
+---
+title: Groundwater Drawdown Calculations - Steady State
+author: ~
+date: '2022-05-14'
+slug: calculate_steady_drawdowns
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2022-05-14T22:20:10+02:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+
+```{r janitoring, include=FALSE}
+library(blogdown)
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+<b></b>
+  
+#### Preface
+  
+  Well, hello there. It's been some time. I've often thought about doing another post, but life, parenting, moving, having a dayjob - happens. Anyway, the toddler is asleep, I'm on holiday, let's talk about groundwater calculations!
+  
+  When talking about groundwater calculations, many professionals automatically think of groundwater flow models. Software packages like [MODFLOW](https://www.usgs.gov/software/modflow-6-usgs-modular-hydrologic-model) essentially aim at reconstructing the real world in a 3D-computer model and then splitting it up in discrete subunits, for each of which [Darcy's Law](https://en.wikipedia.org/wiki/Darcy%27s_law) is solved in an iteration loop, until all subunits are in equilibrium. This approach works very well and is also extremely powerful. It can (as I may have mentioned before in this blog) be tedious and time consuming to set up such a fully specified 3D-groundwater flow model. 
+  
+  If you can live with a bit more of abstraction to solve your problem, however, there is another option to get an idea about what's going on in your aquifer. On top of darcy's law, the 20th century has seen the expanse of a whole zoo of equations to describe the impact of infiltration and exfiltration of water from an aquifer. Some of them are derived analytical, others empirical. They can often be quickly implemented in R or whatever your calculation language of choice is, and provide you with a speedy an quite precise assessment of key parameters of water table manipulations, such as volume flux, drawdown and impact range.
+  
+  In this post I want to highlight a couple of these equations that relate to steady state groundwater flow. This means I will here work with equations that assume sufficient time is available to attain equilibrium e.g. after starting to pump water from a well. To create this blogpost I relied heavily on a book called [Theorie und Praxis der Grundwasserabsenkung](https://www.amazon.de/Theorie-Praxis-Grundwasserabsenkung-Klassiker-Bauingenieurwesens/dp/3433032416/ref=sr_1_1?adgrpid=1206164910937407&hvadid=75385407935095&hvbmt=be&hvdev=c&hvlocphy=128772&hvnetw=o&hvqmt=e&hvtargid=kwd-75385510457565%3Aloc-72&hydadcr=844_1925369&keywords=theorie+und+praxis+der+grundwasserabsenkung&qid=1652561882&sr=8-1) (Theory and practical aspects of groundwater drawdown). It is an excellent resource but as far as I know it is only available in German.
+  
+```{r setup}
+# We once more set up our R environment
+library(raster)    # working with raster data
+library(tidyverse) # wrangling tabular data and plotting
+library(sf)        # things are more fun when located in realspace
+library(ggspatial) # making maps
+library(isoband)   # beautiful isolines
+
+```
+  
+#### Step 1: Calculating the impact range of a pumping well
+  
+  Let's imagine we want to pump water from a well. As we make our plans to do so, we worry that by pumping too much water, the drawdown might have negative impact on the surroundings. I am aware of two different popular equations to asses well impact range (both of them empiric).
+  
+```{r WellRange}
+
+well_range_sichardt <- function(
+    s, # the drawdown of a well created within that well in m
+    k  # the hydraulic conductivity in m/s
+){
+  3000*s*sqrt(k)
+}
+
+well_range_kussakin <- function(
+    s, # the drawdown of a well created within that well in m
+    k, # the hydraulic conductivity in m/s
+    H  # the height of the water table above the aquitard
+){
+  575*s*sqrt((k*H))
+}
+
+# Let's say we want to create 2m drawdown in an aquifer with a 
+# hydraulic conductivity of 5E-5 m/s 
+# (c.f. https://en.wikipedia.org/wiki/Hydraulic_conductivity#Ranges_of_values_for_natural_materials)
+# and a water table height of 18 m
+
+tibble(
+  Equation = c("Sichardt", "Kussakin"),
+  `Range (R) in m` = c(
+    well_range_sichardt(2, 5E-5),
+    well_range_kussakin(2, 5E-5, 18)
+  )
+)
+
+```
+  
+  As you can see, the two equations deliver somewhat different results (except for H = 27 m). Which I think is in part because defining the definite end point of well impact is a somewhat philosophical task, as the drawdown coneshape asymptotically approaches the equilibrium groundwater surface in the infinite distance, at least mathematically.
+  
+  As a rule-of-thump guess however, these numbers both will do in practice. From my personal experience, engineers in my bubble tend to use almost exclusively Sichardt's equation, often to save themselves the trouble of thinking to hard about how much confidence they have in their definition of the aquifer base as given by 'H' (I sure am not blaming anyone for that). That makes Sichardt the de facto standard, afaik.
+  
+  to make things a little more graphic, let's assume that the well we want to use and for that we just calculated the range is located in the Eilenriede Forest in Hannover, Germany. We can look on a map and check if we are close to any important infrastructure. 
+  
+  Disclaimer: all the values in this blogpost are totally made up for educational reasons. Any resemblance to actual wells or aquifers is purely incidental. In fact, the geology used here for calculations is deliberately different from reality.
+  
+```{r FirstMap}
+
+mywell <- tibble(name = "mywell_1", X = 551407, Y = 5804606) %>% 
+  st_as_sf(coords = c("X", "Y"), crs = 25832, remove = FALSE)
+
+mywell_range <- st_buffer(
+  mywell,
+  well_range_sichardt(2, 5E-5)
+)
+
+my_map_scope <- st_buffer(mywell_range, 50)
+
+tempfolder <- tempdir() # create space to save the map tiles
+
+# sets up the canvas
+map1 <- ggplot() +
+  # loads background map tiles from a tile source
+  annotation_map_tile(zoom = 17, cachedir = tempfolder, progress = "none") +
+  # layer_spatial trains the scales
+  layer_spatial(
+    mywell_range, fill = "red", alpha = 0.25, color = "firebrick", size = 1.25
+    ) +
+  layer_spatial(
+    mywell, color = "black", fill = "blue", 
+    size = 4, shape = 21, stroke = 2
+    ) +
+  layer_spatial(my_map_scope, fill = NA, color = NA) +
+  # spatial-aware automagic scale bar
+  annotation_scale(location = "bl") +
+  # spatial-aware automagic north arrow
+  annotation_north_arrow(location = "tr", which_north = "true")
+
+unlink(tempfolder, recursive = TRUE) # tidy up
+
+print(map1)
+
+```
+
+  Alright, so looks like our made up well in our hypothetical, not real scenario would create groundwater drawdown beneath a local town road and a popular beergarden. The impact on this infrastructure, however, would depend, among other things, on the magnitude of the drawdown in the direct vicinity of the structures. Lowering the water table by, say, 0.2 m is usually less of an issue than lowering it by 1.5 m. So we must figure out next just how big the drawdown is going to be at a specific distance from the well.
+  
+#### Step 2: Calculating the Pumping water flux volume
+  
+  In order to determine the drawdown at a distance from a well we need the Dupuit-Thiem-Equations. They are, however, in their basic formulation, meant to derive the amount of water that comes from a well when you create a drawdown 's'. It is not exactly what we are looking for but it is an important step on the way so please bear with me.
+  
+```{R DupuitBase}
+# There are two equations. One for unconfined and one for confined aquifers.
+# In this example we have implicitly worked with a single, unconfined aquifer
+# so far and will continue to do so.
+
+well_Q_unconfined <- function(
+    H, # the height of the water table above the aquitard in m
+    h, # the height of the water table above the aquitarg INSIDE THE WELL (so H-s) in m
+    R, # the distance at which no impact is being made by the well in m
+    r, # the radius of the well in m
+    k  # the hydraulic conductivity in m/s
+    ){
+  # Result is pumping volume Q in m³/s
+  pi*k*((H^2-h^2)/(log((R/r))))
+}
+
+well_Q_confined <- function(
+    H, 
+    h, 
+    R, 
+    r, 
+    k,
+    m # thickness in m of the geological unit containing the confined aquifer
+    ){
+  # Result is pumping volume Q in m³/s
+  2*pi*k*m*((H-h)/(log((R/r))))
+}
+
+# Check that it works
+check_m3s <- well_Q_unconfined(
+  18, 18-2,
+  well_range_sichardt(18-2, 5E-5),
+  0.0508, 5E-5
+  )
+
+tibble(
+  value = c(
+    formatC(check_m3s, digits = 4, format = "f"), 
+    formatC(check_m3s*1000*60, digits = 4, format = "f")
+    ),
+  Unit = c("m³/s", "l/min")
+)
+
+
+```
+  
+  So that is quite a lot of water, but probably within range of what is achievable from a single 4"-well, given a sufficiently powerful pump. As you can see from the chunk above, the Dupuit-Thiem equation features all kinds of interesting terms related to distances and to the height of the water table at these distances. Now if we could rearrange them, to solve for 'h' at a given x, that would be a step forward.
+  
+#### Step 3: Calculating the well drawdown for a given pumping rate
+  
+  So we want to solve a different problem than the one that the Dupuit-Thiem equation is trying to answer. We do not care so much for the volume flux 'Q'. In the field we can just fire up the pump until its rate matches a desired outcome. We would, however, very much like to know, what the impact of our deeds on the aquifer would be.
+  
+  So this is a bit of a tricky problem. Basically we want so solve the equation for 'h'. But as you can see from the chunk above, the equation also contains 'R' which is itself calculated depending on 'h'. This results in kind of a mathematical mess that I must humbly admit I could not figure out analytically myself. That's why I brute-forced it. 
+  
+```{r ThiemH}
+
+well_h_unconfined <- function(
+    Q, # water volume flux pumped from the well in m³/s
+    H, # the height of the water table above the aquitard in m
+    r, # the radius of the well in m
+    k, # the hydraulic conductivity in m/s
+    s_search_min = 0.001, # minimum drawdown in m to be tried
+    s_search_max = H      # maximum drawdown in m to be tried
+    ){
+  
+  # a slightly retooled formulation of `well_Q_unconfined` to fit the purpose
+  speculative_Q <- function(s, H, r, k){
+    pi*k*((H^2-(H-s)^2)/(log(((well_range_sichardt(s = s, k = k))/r))))
+  }
+  
+  # What is the difference between Q at a given drawdown s and the acutal
+  # Q we apply at our pump
+  q_speculation_quality <- function(s, Q, H, r, k){
+    Q_spec <- speculative_Q(s = s, H = H, r = r, k = k)
+    sqrt(((Q-Q_spec)^2))
+  }
+  
+  # calculate Q for every conceivable s and keep only the one that is closest
+  # to "our" Q
+  ompitimization_res <- stats::optimize(
+    q_speculation_quality,
+    interval = c(s_search_min, s_search_max),
+    Q = Q, H = H, r = r, k = k
+  )
+  
+  s <- ompitimization_res$minimum
+  
+  # returning h
+  H-s
+}
+
+well_h_unconfined(Q = 0.0011, H = 18, r = 0.0508, k = 5E-5)
+
+```
+  
+  Not too bad. The difference of ~0.74 m to the actual 'h' of 16 m that we know from above comes from the fact that, mathematically, the water surface within our 4" well isn't flat and at the rim the cone has already risen by that amount.
+  
+  But wait. The distance x between the well center and the well radius 'r' gives us a difference in 'h'? So we can just forget about the mental model of a solid steel&PVC well and use any given distance to generate 'h' at 'x'?  
+
+#### Step 4: Calculating the drawdown coneshape
+  
+  If we can get 'h' and therefore 's' at any given distance, we can make Isolines and assess the magnitude of the impact of our well on the surroundings!
+  
+```{r Coneshape}
+well_coneshape <- function(
+    x, # distance from the well in m
+    Q, # water volume flux pumped from the well in m³/s
+    H, # the height of the water table above the aquitard in m
+    r, # the radius of the well in m
+    k, # the hydraulic conductivity in m/s
+    s_search_min = 0.001,
+    s_search_max = H
+    ){
+  
+  # get the water height within the well
+  h <-  well_h_unconfined(
+    Q = Q, H = H, r = r, k = k, 
+    s_search_min = s_search_min, s_search_max = s_search_max
+    )
+  
+  # get the drawdown within the well
+  s <- H-h
+  R <- well_range_sichardt(s = s, k = k)
+  
+  # well impact mustn't exceed range
+  if(x >= R){
+    H
+  } else {
+    # solve Dupuit-Thiem one last time
+    # but this time, target range is x
+    sqrt(((Q*(2.3*(log10(x)-log10(r))))/(pi*k))+h^2)
+  }
+}
+
+# Quick check
+
+x_range <- seq(0.2, 65, 0.2)
+h_at_x <- vapply(
+ x_range,
+ well_coneshape,
+ numeric(1),
+ Q = 0.002, H = 18, r = 0.0508, k = 5E-5
+ )
+
+# quick visual
+ggplot(
+  data = tibble(
+    `distance from well [m]` = x_range,
+    `water coloumn height above aquitard [m]`= h_at_x
+    ),
+  mapping = aes(
+    x = `distance from well [m]`, 
+    y = `water coloumn height above aquitard [m]`
+    )
+) +
+  geom_line(color = "blue", size = 1) + theme_bw()
+
+```
+  
+  It works in 1D. In order to plot it on a map, I'd like to transition do 2D.
+  
+```{r SecondMap}
+# Make a regular grid of point coordinates of the model area
+distgrid <- st_make_grid(my_map_scope, cellsize = 2, what = "centers") %>% 
+  st_as_sf() %>% 
+  cbind(., st_coordinates(.)) %>% 
+  mutate(., welldist = st_distance(., mywell) %>% as.numeric()) %>%   # calculate distance to well per point
+  mutate( # calculate drawdown at ecery grid point
+    drawdown = 18 - map_dbl(
+      welldist, 
+      well_coneshape,
+      Q = 0.002, H = 18, r = 0.0508, k = 5E-5
+      )
+  )
+
+# convert to spatial raster
+distrast <- distgrid %>% 
+  st_drop_geometry() %>% 
+  select(X, Y, drawdown) %>% 
+  rasterFromXYZ(crs = "EPSG:25832")
+
+# Function to make isolines from raster
+isolines_raster <- function(x, lvl) {
+  b <- isoband::isolines(
+    xFromCol(x, seq_len(dim(x)[2L])), 
+    yFromRow(x, seq_len(dim(x)[1L])), 
+    as.matrix(x[[1]], wide = TRUE), 
+    levels = lvl)
+  sf::st_sf(lvl = lvl, geometry  = sf::st_sfc(isoband::iso_to_sfg(b), crs = st_crs(x)))
+}
+
+# create isolines
+drawdown_isos <- isolines_raster(
+  distrast,
+  lvl = seq(
+    floor(min(distgrid$drawdown)) - 1,
+    ceiling(max(distgrid$drawdown)) + 1,
+    0.1
+    )
+) %>% 
+  filter(., !st_is_empty(.))
+
+
+# plot!!
+
+tempfolder2 <- tempdir() # create space to save the map tiles
+
+# sets up the canvas
+map2 <- ggplot() +
+  # loads background map tiles from a tile source
+  annotation_map_tile(
+    zoom = 18, cachedir = tempfolder2, progress = "none", type = "stamenbw"
+    ) +
+  # layer_spatial trains the scales
+  layer_spatial(
+    drawdown_isos,
+    aes(color = lvl),
+    size = 1
+    ) +
+  layer_spatial(mywell, color = "black", size = 1) +
+  layer_spatial(st_buffer(drawdown_isos, 10), fill = NA, color = NA) +
+  # spatial-aware automagic scale bar
+  annotation_scale(location = "bl") +
+  # spatial-aware automagic north arrow
+  annotation_north_arrow(location = "tr", which_north = "true") +
+  scale_color_viridis_c(begin = 0.1)
+
+unlink(tempfolder2, recursive = TRUE) # tidy up
+
+print(map2)
+
+```
+  
+  As you can see, the drawdown that reaches the road in this made up scenario is up to 0.8 m. Depending on the geology of the area and some other factors, this could be problematic. The beergarden in the north however receives less than 0.3 m drawdown. Often, but not always, this is an unproblematic amount of drawdown. 
+  
+  Special thanks once more to [@paleolimbot](https://twitter.com/paleolimbot) for creating ggspatial. I also owe a lot to [@mdsumner](https://twitter.com/mdsumner), who came up with [a way to make {isoband} isolines from raster](https://gist.github.com/mdsumner/eab05cc75176add545859054f3aa8bf4) objects.
