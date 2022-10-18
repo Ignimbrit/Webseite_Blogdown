@@ -1,0 +1,11 @@
+# Font style metadata
+name = "Default"
+
+# Optional Google font URL
+google_fonts = ""
+
+# Font families
+heading_font = "Montserrat"
+body_font = "Overpass"
+nav_font = "Overpass"
+mono_font = "Overpass Mono"
